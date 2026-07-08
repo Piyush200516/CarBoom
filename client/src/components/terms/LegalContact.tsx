@@ -5,6 +5,7 @@ import { ChevronDown, FileText, Gavel, Scale, Mail, Phone, Clock, ArrowRight, Sh
 import { Link } from "react-router-dom";
 import { Card } from "../ui/Card";
 import { Badge } from "../ui/Badge";
+import { SUPPORT_PHONE, SUPPORT_PHONE_RAW, SUPPORT_EMAIL } from "../../constants/contact";
 
 interface AccordionItem {
   id: string;
@@ -166,8 +167,8 @@ export const LegalContact: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Email Address</h4>
-                    <a href="mailto:support@carboom.in" className="font-extrabold text-gray-900 dark:text-white text-sm hover:text-[#FACC15] transition mt-0.5 block">
-                      support@carboom.in
+                    <a href={`mailto:${SUPPORT_EMAIL}`} className="font-extrabold text-gray-900 dark:text-white text-sm hover:text-[#FACC15] transition mt-0.5 block">
+                      {SUPPORT_EMAIL}
                     </a>
                   </div>
                 </div>
@@ -179,8 +180,8 @@ export const LegalContact: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Helpline Support</h4>
-                    <a href="tel:+919876543210" className="font-extrabold text-gray-900 dark:text-white text-sm hover:text-emerald-500 transition mt-0.5 block">
-                      +91 98765 43210
+                    <a href={`tel:${SUPPORT_PHONE_RAW}`} className="font-extrabold text-gray-900 dark:text-white text-sm hover:text-emerald-500 transition mt-0.5 block">
+                      {SUPPORT_PHONE}
                     </a>
                   </div>
                 </div>

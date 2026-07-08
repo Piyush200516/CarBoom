@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { PhoneCall, ShieldAlert, AlertTriangle, X } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
+import { SUPPORT_PHONE, SUPPORT_PHONE_RAW } from "../../constants/contact";
 
 export const EmergencySupport: React.FC = () => {
   const [sosActive, setSosActive] = useState(false);
@@ -61,14 +62,14 @@ export const EmergencySupport: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
                 <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
                   <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Roadside Assistance</div>
-                  <a href="tel:18004197600" className="text-base font-black text-white hover:text-yellow-400 transition flex items-center gap-2 mt-1">
-                    <PhoneCall size={16} /> 1800-419-7600
+                  <a href={`tel:${SUPPORT_PHONE_RAW}`} className="text-base font-black text-white hover:text-yellow-400 transition flex items-center gap-2 mt-1">
+                    <PhoneCall size={16} /> {SUPPORT_PHONE}
                   </a>
                 </div>
                 <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
                   <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Customer Support Helpline</div>
-                  <a href="tel:18001032292" className="text-base font-black text-white hover:text-yellow-400 transition flex items-center gap-2 mt-1">
-                    <PhoneCall size={16} /> 1800-103-2292
+                  <a href={`tel:${SUPPORT_PHONE_RAW}`} className="text-base font-black text-white hover:text-yellow-400 transition flex items-center gap-2 mt-1">
+                    <PhoneCall size={16} /> {SUPPORT_PHONE}
                   </a>
                 </div>
               </div>

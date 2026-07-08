@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { MessageSquare, Mail, Phone, Clipboard } from "lucide-react";
 import { Button } from "../../components/ui/Button";
+import { SUPPORT_PHONE, SUPPORT_PHONE_RAW, SUPPORT_EMAIL } from "../../constants/contact";
 
 interface Channel {
   title: string;
@@ -24,17 +25,17 @@ const channels: Channel[] = [
   },
   {
     title: "Email Support",
-    detail: "support@carboom.in",
+    detail: SUPPORT_EMAIL,
     Icon: Mail,
     cta: "Send Email",
-    link: "mailto:support@carboom.in",
+    link: `mailto:${SUPPORT_EMAIL}`,
   },
   {
     title: "Phone Support",
-    detail: "+91-9876543210",
+    detail: SUPPORT_PHONE,
     Icon: Phone,
     cta: "Call Us",
-    link: "tel:+919876543210",
+    link: `tel:${SUPPORT_PHONE_RAW}`,
   },
   {
     title: "WhatsApp",

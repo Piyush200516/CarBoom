@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Landmark, MessageSquare, Send, CheckCircle2, RefreshCw } from "lucide-react";
+import { SUPPORT_EMAIL } from "../../constants/contact";
 
 export const PrivacyContact: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -72,10 +73,10 @@ export const PrivacyContact: React.FC = () => {
                 </span>
                 <h4 className="text-sm font-bold text-gray-900 dark:text-white">Data Protection Officer</h4>
                 <a
-                  href="mailto:privacy@carboom.com"
+                  href={`mailto:${SUPPORT_EMAIL}`}
                   className="text-xs font-bold text-[#FACC15] hover:underline block"
                 >
-                  privacy@carboom.com
+                  {SUPPORT_EMAIL}
                 </a>
                 <p className="text-[10px] text-gray-400 dark:text-gray-500 leading-normal">
                   Response within 2 business days. Direct regulatory escalation channel.

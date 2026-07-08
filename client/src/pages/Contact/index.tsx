@@ -1,4 +1,5 @@
 // src/pages/Contact/index.tsx
+import { SUPPORT_PHONE, SUPPORT_EMAIL } from "../../constants/contact";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -44,13 +45,13 @@ export const Contact = () => {
   const contactInfo = [
     {
       title: "Email Us",
-      details: "support@carboom.in",
+      details: SUPPORT_EMAIL,
       subText: "For general inquiries, bookings, and owner issues.",
       icon: Mail,
     },
     {
       title: "Call Us",
-      details: "+91 98765 43210",
+      details: SUPPORT_PHONE,
       subText: "Monday to Sunday: 9:00 AM to 9:00 PM.",
       icon: Phone,
     },
