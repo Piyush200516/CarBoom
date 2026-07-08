@@ -69,6 +69,7 @@ model User {
   vehicles      Vehicle[]
 
   @@map("users")
+  bookings Booking[]
 }
 
 model RefreshToken {
@@ -162,4 +163,95 @@ model VehicleAvailability {
   @@index([vehicleId])
   @@index([startDate, endDate])
   @@map("vehicle_availabilities")
+}
+
+
+// ---------- Booking System ----------
+enum BookingDuration {
+  HOURLY
+  DAILY
+  WEEKLY
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  RAZORPAY
+  UPI
+  CARD
+  NET_BANKING
+  WALLET
+  CASH
+}
+
+model Booking {
+  id               String          @id @default(uuid())
+  userId           String
+  vehicleId        String
+  startTime        DateTime
+  endTime          DateTime
+  duration         BookingDuration
+  status           BookingStatus   @default(PENDING)
+  securityDeposit  Float
+  totalAmount      Float
+  couponId   String?
+  paymentId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User @relation(fields: [userId], references: [id])
+  vehicle     Vehicle @relation(fields: [vehicleId], references: [id])
+  coupon      Coupon? @relation(fields: [couponId], references: [id])
+  payment     Payment? @relation(fields: [paymentId], references: [id])
+}
+
+model Payment {
+  id           String   @id @default(uuid())
+  bookingId    String   @unique
+  amount       Float
+  method       PaymentMethod
+  status       PaymentStatus
+  razorpayId   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  booking      Booking  @relation(fields: [bookingId], references: [id])
+}
+
+model Coupon {
+  id            String   @id @default(uuid())
+  code          String   @unique
+  discountType  String   // "percentage" | "fixed"
+  discountValue Float
+  expiresAt     DateTime?
+  maxUses       Int?     // null = unlimited
+  uses          Int      @default(0)
+  createdAt     DateTime @default(now())
+}
+
+model Transaction {
+  id           String   @id @default(uuid())
+  bookingId    String
+  amount       Float
+  type         String   // "deposit", "payment", "refund"
+  gatewayRef   String?  // optional Razorpay reference
+  status       String   // "success", "failed"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  booking      Booking  @relation(fields: [bookingId], references: [id])
 }
