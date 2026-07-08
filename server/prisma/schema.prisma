@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -10,5 +8,158 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  RENTER
+  OWNER
+  ADMIN
+}
+
+enum VehicleType {
+  CAR
+  BIKE
+  SCOOTER
+  BICYCLE
+}
+
+enum VehicleStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  UNAVAILABLE
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  BOOKED
+  MAINTENANCE
+}
+
+enum DocumentType {
+  RC
+  INSURANCE
+  PUC
+  DRIVING_PERMIT
+}
+
+enum FuelType {
+  PETROL
+  DIESEL
+  CNG
+  ELECTRIC
+}
+
+enum Transmission {
+  MANUAL
+  AUTOMATIC
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  password      String
+  name          String
+  phone         String?
+  role          Role           @default(RENTER)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  refreshTokens RefreshToken[]
+  vehicles      Vehicle[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
+
+model Vehicle {
+  id                 String                @id @default(uuid())
+  name               String
+  type               VehicleType
+  brand              String
+  model              String
+  variant            String?
+  year               Int
+  registrationNumber String                @unique
+  fuelType           FuelType
+  transmission       Transmission
+  color              String
+  seatingCapacity    Int
+  mileage            Float
+  description        String
+  city               String
+  state              String
+  pickupAddress      String
+  latitude           Float
+  longitude          Float
+  pricePerHour       Float
+  pricePerDay        Float
+  pricePerWeek       Float
+  securityDeposit    Float
+  status             VehicleStatus         @default(DRAFT)
+  ownerId            String
+  owner              User                  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  images             VehicleImage[]
+  documents          VehicleDocument[]
+  availabilities     VehicleAvailability[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([city])
+  @@index([type])
+  @@map("vehicles")
+}
+
+model VehicleImage {
+  id           String   @id @default(uuid())
+  vehicleId    String
+  vehicle      Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  url          String
+  publicId     String?
+  isPrimary    Boolean  @default(false)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([vehicleId])
+  @@map("vehicle_images")
+}
+
+model VehicleDocument {
+  id        String       @id @default(uuid())
+  vehicleId String
+  vehicle   Vehicle      @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  type      DocumentType
+  url       String
+  publicId  String?
+  createdAt DateTime     @default(now())
+
+  @@index([vehicleId])
+  @@map("vehicle_documents")
+}
+
+model VehicleAvailability {
+  id        String             @id @default(uuid())
+  vehicleId String
+  vehicle   Vehicle            @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  startDate DateTime
+  endDate   DateTime
+  status    AvailabilityStatus @default(AVAILABLE)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@index([vehicleId])
+  @@index([startDate, endDate])
+  @@map("vehicle_availabilities")
 }
