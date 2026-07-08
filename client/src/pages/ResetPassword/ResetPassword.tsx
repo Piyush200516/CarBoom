@@ -32,7 +32,7 @@ export const ResetPassword = () => {
     resolver: zodResolver(resetSchema),
   });
 
-  const onSubmit = async (data: ResetFormValues) => {
+  const onSubmit = async (_: ResetFormValues) => {
     return new Promise<void>((resolve) => {
       setTimeout(() => {
         toast("Password Reset Successful", {

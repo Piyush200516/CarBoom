@@ -2,7 +2,7 @@
 
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useMemo, useState, FormEvent } from "react";
-import { motion } from "framer-motion";
+
 import { Fuel, Settings, Users, Fuel as MileageIcon, Star, Check, ArrowRight, MessageSquare, AlertCircle, Heart, MapPin, Calendar } from "lucide-react";
 import { mockVehicles } from "../../data/mockData";
 import { RatingStars } from "../../components/common/RatingStars";

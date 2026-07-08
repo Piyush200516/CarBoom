@@ -11,6 +11,7 @@ import HowItWorks from "../pages/HowItWorks";
 import BecomeOwner from "../pages/BecomeOwner";
 import AboutUs from "../pages/AboutUs";
 import Contact from "../pages/Contact";
+import HelpCenterPage from "../pages/HelpCenter";
 import VehicleDetails from "../pages/VehicleDetails";
 import NotFound from "../pages/NotFound/NotFound";
 
@@ -32,6 +33,7 @@ const AppRoutes = () => {
         <Route path="about" element={<AboutUs />} />
         <Route path="contact" element={<Contact />} />
         <Route path="vehicle/:id" element={<VehicleDetails />} />
+            <Route path="help" element={<HelpCenterPage />} />
       </Route>
 
       {/* Catch-all 404 */}
