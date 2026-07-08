@@ -15,6 +15,8 @@ import HelpCenterPage from "../pages/HelpCenter";
 import VehicleDetails from "../pages/VehicleDetails";
 import SafetyPage from "../pages/Safety";
 import CancellationPolicy from "../pages/CancellationPolicy";
+import PrivacyPage from "../pages/Privacy";
+import TermsPage from "../pages/Terms";
 import NotFound from "../pages/NotFound/NotFound";
 
 const AppRoutes = () => {
@@ -39,6 +41,8 @@ const AppRoutes = () => {
         <Route path="safety" element={<SafetyPage />} />
         <Route path="cancellation-policy" element={<CancellationPolicy />} />
         <Route path="cancel" element={<CancellationPolicy />} />
+        <Route path="privacy" element={<PrivacyPage />} />
+        <Route path="terms" element={<TermsPage />} />
       </Route>
 
       {/* Catch-all 404 */}
