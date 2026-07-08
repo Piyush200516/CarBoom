@@ -5,7 +5,15 @@ import { FAQItem } from "./FAQItem";
 import { helpFAQ } from "../../data/helpFAQ";
 import { motion } from "framer-motion";
 
-export const FAQSection: React.FC = () => {
+interface FAQSectionProps {
+  title?: string;
+  data?: { question: string; answer: string }[];
+}
+
+export const FAQSection: React.FC<FAQSectionProps> = ({
+  title = "Popular FAQs",
+  data = helpFAQ,
+}) => {
   return (
     <section id="faqs" className="py-16 bg-gray-50 dark:bg-gray-800">
       <div className="container mx-auto px-4 md:px-8">
@@ -15,10 +23,10 @@ export const FAQSection: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          Popular FAQs
+          {title}
         </motion.h2>
         <div className="max-w-3xl mx-auto space-y-4">
-          {helpFAQ.map((item, idx) => (
+          {data.map((item, idx) => (
             <motion.div
               key={item.question}
               initial={{ opacity: 0, y: 10 }}
@@ -33,3 +41,4 @@ export const FAQSection: React.FC = () => {
     </section>
   );
 };
+

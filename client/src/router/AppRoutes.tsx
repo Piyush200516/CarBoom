@@ -13,6 +13,8 @@ import AboutUs from "../pages/AboutUs";
 import Contact from "../pages/Contact";
 import HelpCenterPage from "../pages/HelpCenter";
 import VehicleDetails from "../pages/VehicleDetails";
+import SafetyPage from "../pages/Safety";
+import CancellationPolicy from "../pages/CancellationPolicy";
 import NotFound from "../pages/NotFound/NotFound";
 
 const AppRoutes = () => {
@@ -33,7 +35,10 @@ const AppRoutes = () => {
         <Route path="about" element={<AboutUs />} />
         <Route path="contact" element={<Contact />} />
         <Route path="vehicle/:id" element={<VehicleDetails />} />
-            <Route path="help" element={<HelpCenterPage />} />
+        <Route path="help" element={<HelpCenterPage />} />
+        <Route path="safety" element={<SafetyPage />} />
+        <Route path="cancellation-policy" element={<CancellationPolicy />} />
+        <Route path="cancel" element={<CancellationPolicy />} />
       </Route>
 
       {/* Catch-all 404 */}
