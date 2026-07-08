@@ -1,7 +1,7 @@
 // src/pages/NotFound/NotFound.tsx
-import * as React from "react";
+
 import { Link } from "react-router-dom";
-import { Compass, Home, ArrowLeft } from "lucide-react";
+import { Compass, Home } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "../../components/ui/Button";
 

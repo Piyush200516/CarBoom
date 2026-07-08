@@ -1,9 +1,10 @@
 // src/pages/VehicleDetails/index.tsx
-import * as React from "react";
+
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { Fuel, Settings, Users, Fuel as MileageIcon, Star, Check, ArrowRight, MessageSquare, AlertCircle, Heart, MapPin, Calendar, Compass, ShieldCheck } from "lucide-react";
-import { mockVehicles, Vehicle } from "../../data/mockData";
+import { useMemo, useState, FormEvent } from "react";
+import { motion } from "framer-motion";
+import { Fuel, Settings, Users, Fuel as MileageIcon, Star, Check, ArrowRight, MessageSquare, AlertCircle, Heart, MapPin, Calendar } from "lucide-react";
+import { mockVehicles } from "../../data/mockData";
 import { RatingStars } from "../../components/common/RatingStars";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -15,18 +16,18 @@ export const VehicleDetails = () => {
   const navigate = useNavigate();
 
   // Find vehicle by ID
-  const vehicle = React.useMemo(() => {
+  const vehicle = useMemo(() => {
     return mockVehicles.find((v) => v.id === id);
   }, [id]);
 
   // Gallery slider state
-  const [activeImgIndex, setActiveImgIndex] = React.useState(0);
+  const [activeImgIndex, setActiveImgIndex] = useState(0);
 
   // Booking Form state
-  const [pickupDate, setPickupDate] = React.useState("");
-  const [returnDate, setReturnDate] = React.useState("");
-  const [pickupLoc, setPickupLoc] = React.useState("Main Hub (Free)");
-  const [isWishlisted, setIsWishlisted] = React.useState(false);
+  const [pickupDate, setPickupDate] = useState("");
+  const [returnDate, setReturnDate] = useState("");
+  const [pickupLoc, setPickupLoc] = useState("Main Hub (Free)");
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
   if (!vehicle) {
     return (
@@ -44,7 +45,7 @@ export const VehicleDetails = () => {
   }
 
   // Calculate pricing
-  const pricingSummary = React.useMemo(() => {
+  const pricingSummary = useMemo(() => {
     if (!pickupDate || !returnDate) return null;
     
     const start = new Date(pickupDate);
@@ -86,7 +87,7 @@ export const VehicleDetails = () => {
     };
   }, [pickupDate, returnDate, vehicle]);
 
-  const handleBooking = (e: React.FormEvent) => {
+  const handleBooking = (e: FormEvent) => {
     e.preventDefault();
     if (!pickupDate || !returnDate) {
       toast("Select dates", { description: "Please choose pickup and return dates.", type: "error" });

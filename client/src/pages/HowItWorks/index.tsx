@@ -41,7 +41,7 @@ export const HowItWorks = () => {
     {
       title: "Verified Owners",
       description: "Every listing is double-checked by our team. Vehicles are fully inspected, registered, and insured.",
-      icon: ShieldIcon,
+      icon: ShieldCheck,
     },
     {
       title: "Secure Payments",
@@ -51,7 +51,7 @@ export const HowItWorks = () => {
     {
       title: "24/7 Support",
       description: "Round-the-clock roadside assistance and chat support to keep you safe and moving.",
-      icon: MessageSquareRing,
+      icon: MessageSquare,
     },
     {
       title: "Flexible Rentals",

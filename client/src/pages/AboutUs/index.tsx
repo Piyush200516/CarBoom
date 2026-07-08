@@ -1,5 +1,5 @@
 // src/pages/AboutUs/index.tsx
-import * as React from "react";
+
 import { Compass, Target, Heart, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "../../components/ui/Card";
