@@ -8,7 +8,7 @@ import {
   verifyRefreshToken,
 } from "../utils/jwt.js";
 import { config } from "../config/config.js";
-import { Role } from "../../generated/prisma/index.js";
+import { Role } from "@prisma/client";
 
 // Helper to parse simple duration strings (e.g. "7d", "15m", "24h") to milliseconds
 export const parseDuration = (duration: string): number => {

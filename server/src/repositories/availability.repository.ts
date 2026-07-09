@@ -1,5 +1,5 @@
 import { prisma } from "../config/db.js";
-import { AvailabilityStatus } from "../../generated/prisma/index.js";
+import { AvailabilityStatus } from "@prisma/client";
 
 export class AvailabilityRepository {
   async getAvailability(vehicleId: string) {

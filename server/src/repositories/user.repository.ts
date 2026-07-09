@@ -1,5 +1,5 @@
 import { prisma } from "../config/db.js";
-import { Role } from "../../generated/prisma/index.js";
+import { Role } from "@prisma/client";
 
 export class UserRepository {
   async createUser(data: {

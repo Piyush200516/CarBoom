@@ -1,13 +1,9 @@
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 import { cloudinary, isCloudinaryConfigured } from "../config/cloudinary.js";
 import { ApiError } from "../utils/apiError.js";
 import { logger } from "../config/logger.js";
 
-// Helper to get __dirname in ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export class StorageService {
   async uploadFile(

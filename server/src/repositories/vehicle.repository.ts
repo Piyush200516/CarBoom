@@ -5,7 +5,7 @@ import {
   FuelType,
   Transmission,
   DocumentType,
-} from "../../generated/prisma/index.js";
+} from "@prisma/client";
 
 export class VehicleRepository {
   async createVehicle(data: {
