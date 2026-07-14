@@ -1,7 +1,7 @@
 // src/components/terms/CancellationTimeline.tsx
 import React from "react";
 import { motion } from "framer-motion";
-import { CalendarCheck, CalendarRange, CalendarX, ShieldCheck, HelpCircle } from "lucide-react";
+import { CalendarCheck, CalendarRange, CalendarX, ShieldCheck } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Badge } from "../ui/Badge";
 

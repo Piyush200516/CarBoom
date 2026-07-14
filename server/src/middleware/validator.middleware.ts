@@ -13,9 +13,20 @@ export const validate = (schema: ZodSchema) => {
       })) as any;
 
       // Assign back validated data to keep types correct if needed
-      req.body = parsed.body || req.body;
-      req.query = parsed.query || req.query;
-      req.params = parsed.params || req.params;
+      if (parsed.body !== undefined) {
+        req.body = parsed.body;
+      }
+      if (parsed.query !== undefined) {
+        Object.defineProperty(req, 'query', {
+          value: parsed.query,
+          writable: true,
+          enumerable: true,
+          configurable: true,
+        });
+      }
+      if (parsed.params !== undefined) {
+        req.params = parsed.params;
+      }
 
       return next();
     } catch (error) {

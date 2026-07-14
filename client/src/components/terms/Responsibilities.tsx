@@ -1,7 +1,7 @@
 // src/components/terms/Responsibilities.tsx
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Compass, CheckCircle2, User, Landmark, ShieldCheck, Sparkles, AlertCircle } from "lucide-react";
+import { motion } from "framer-motion";
+import { Compass, CheckCircle2, User, Landmark, AlertCircle } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Badge } from "../ui/Badge";
 

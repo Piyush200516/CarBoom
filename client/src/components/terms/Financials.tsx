@@ -1,7 +1,6 @@
 // src/components/terms/Financials.tsx
 import React from "react";
-import { motion } from "framer-motion";
-import { IndianRupee, ShieldAlert, CreditCard, HelpCircle, CheckCircle } from "lucide-react";
+import { IndianRupee, ShieldAlert, CreditCard, CheckCircle } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Badge } from "../ui/Badge";
 

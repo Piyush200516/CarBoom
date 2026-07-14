@@ -75,11 +75,6 @@ export const Eligibility: React.FC = () => {
     },
   };
 
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
-  };
-
   return (
     <section id="eligibility" className="py-20 px-6 bg-white dark:bg-gray-950 scroll-mt-20">
       <div className="max-w-6xl mx-auto space-y-16">

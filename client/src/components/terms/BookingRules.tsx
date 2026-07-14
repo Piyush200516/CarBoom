@@ -1,7 +1,6 @@
 // src/components/terms/BookingRules.tsx
 import React from "react";
-import { motion } from "framer-motion";
-import { Clock, CalendarRange, Sparkles, RefreshCw, KeyRound } from "lucide-react";
+import { Clock, CalendarRange, RefreshCw, KeyRound } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Badge } from "../ui/Badge";
 

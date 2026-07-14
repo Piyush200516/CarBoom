@@ -7,6 +7,7 @@ import { Mail, Lock, User, Phone, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useToast } from "../../components/ui/Toast";
+import { authService } from "../../services/authService";
 
 const signupSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -36,16 +37,27 @@ export const Signup = () => {
   });
 
   const onSubmit = async (data: SignupFormValues) => {
-    return new Promise<void>((resolve) => {
-      setTimeout(() => {
-        toast("Account Created Successfully", {
-          description: `Welcome to CarBoom, ${data.name}!`,
-          type: "success",
-        });
-        navigate("/login");
-        resolve();
-      }, 1500);
-    });
+    try {
+      const payload = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        password: data.password,
+        role: "RENTER"
+      };
+      await authService.register(payload);
+      
+      toast("Account Created Successfully", {
+        description: `Welcome to CarBoom, ${data.name}!`,
+        type: "success",
+      });
+      navigate("/login");
+    } catch (error: any) {
+      toast("Signup Failed", {
+        description: error.response?.data?.message || "An error occurred during signup",
+        type: "error",
+      });
+    }
   };
 
   return (

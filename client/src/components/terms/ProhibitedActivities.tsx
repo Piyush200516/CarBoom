@@ -1,6 +1,5 @@
 // src/components/terms/ProhibitedActivities.tsx
 import React from "react";
-import { motion } from "framer-motion";
 import { AlertTriangle, Gauge, Mountain, Briefcase, Cigarette, Users, Cpu } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Badge } from "../ui/Badge";

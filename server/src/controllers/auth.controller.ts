@@ -3,6 +3,7 @@ import { authService, parseDuration } from "../services/auth.service.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { config } from "../config/config.js";
+import { logger } from "../config/logger.js";
 import { ApiError } from "../utils/apiError.js";
 
 const setAuthCookies = (res: Response, accessToken: string, refreshToken: string) => {
@@ -39,6 +40,7 @@ const clearAuthCookies = (res: Response) => {
 
 export class AuthController {
   register = asyncHandler(async (req: Request, res: Response) => {
+    logger.info(`[Auth Controller] Register request for email: ${req.body.email}`);
     const { email, password, name, phone, role } = req.body;
     const user = await authService.register({
       email,
@@ -54,6 +56,7 @@ export class AuthController {
   });
 
   login = asyncHandler(async (req: Request, res: Response) => {
+    logger.info(`[Auth Controller] Login request for email: ${req.body.email}`);
     const { email, password } = req.body;
     const { user, accessToken, refreshToken } = await authService.login(
       email,

@@ -1,7 +1,7 @@
 // src/components/terms/AccountSuspension.tsx
 import React from "react";
 import { motion } from "framer-motion";
-import { UserX, ShieldAlert, AlertOctagon, HelpCircle, XCircle } from "lucide-react";
+import { UserX, ShieldAlert, AlertOctagon, XCircle } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Badge } from "../ui/Badge";
 

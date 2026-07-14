@@ -4,8 +4,11 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useAuth } from "../../store/AuthContext";
+import { useToast } from "../../components/ui/Toast";
+import { authService } from "../../services/authService";
 
 // Zod schema for login validation
 const loginSchema = z.object({
@@ -26,14 +29,27 @@ export const Login = () => {
 
   const [showPassword, setShowPassword] = useState(false);
 
+  const { login } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
   const onSubmit = async (data: LoginFormValues) => {
-    // Simulated login request
-    return new Promise<void>((resolve) => {
-      setTimeout(() => {
-        alert(`Logged in as ${data.email}`);
-        resolve();
-      }, 1500);
-    });
+    try {
+      const response = await authService.login(data);
+      if (response.success && response.data?.user) {
+        login(response.data.user);
+        toast("Login Successful", {
+          description: `Welcome back, ${response.data.user.name}!`,
+          type: "success",
+        });
+        navigate("/");
+      }
+    } catch (error: any) {
+      toast("Login Failed", {
+        description: error.response?.data?.message || "Invalid email or password",
+        type: "error",
+      });
+    }
   };
 
   return (

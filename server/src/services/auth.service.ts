@@ -9,6 +9,7 @@ import {
 } from "../utils/jwt.js";
 import { config } from "../config/config.js";
 import { Role } from "@prisma/client";
+import { logger } from "../config/logger.js";
 
 // Helper to parse simple duration strings (e.g. "7d", "15m", "24h") to milliseconds
 export const parseDuration = (duration: string): number => {
@@ -40,13 +41,17 @@ export class AuthService {
     }
 
     // Hash the password
+    logger.info(`[Auth Service] Hashing password for email: ${data.email}`);
     const hashedPassword = await hashPassword(data.passwordHash);
 
     // Create the user
+    logger.info(`[Auth Service] Inserting new user into database: ${data.email}`);
     const user = await userRepository.createUser({
       ...data,
       passwordHash: hashedPassword,
     });
+
+    logger.info(`[Auth Service] User inserted successfully: ${user.id}`);
 
     // Remove password from returned object
     const { password, ...userWithoutPassword } = user;
@@ -61,11 +66,13 @@ export class AuthService {
     }
 
     // Verify password
+    logger.info(`[Auth Service] Verifying password for email: ${email}`);
     const isPasswordValid = await comparePassword(passwordHash, user.password);
     if (!isPasswordValid) {
       throw new ApiError(401, "Invalid email or password");
     }
 
+    logger.info(`[Auth Service] Generating tokens for user: ${user.id}`);
     // Generate tokens
     const accessToken = generateAccessToken({
       userId: user.id,
