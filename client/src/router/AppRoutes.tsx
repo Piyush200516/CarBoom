@@ -1,7 +1,9 @@
 // src/router/AppRoutes.tsx
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
+import DashboardLayout from "../layouts/DashboardLayout";
 import Home from "../pages/Home/Home";
+import DashboardHome from "../pages/Dashboard/DashboardHome";
 import Login from "../pages/Login/Login";
 import Signup from "../pages/Signup/Signup";
 import ForgotPassword from "../pages/ForgotPassword/ForgotPassword";
@@ -28,7 +30,13 @@ const AppRoutes = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
-      {/* Pages wrapped in MainLayout */}
+      {/* Authenticated Dashboard Pages */}
+      <Route path="/dashboard" element={<DashboardLayout />}>
+        <Route index element={<DashboardHome />} />
+        {/* We can add more dashboard-specific routes here later */}
+      </Route>
+
+      {/* Public Pages wrapped in MainLayout */}
       <Route path="/" element={<MainLayout />}>
         <Route index element={<Home />} />
         <Route path="browse" element={<BrowseVehicles />} />

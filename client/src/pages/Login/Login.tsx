@@ -42,7 +42,7 @@ export const Login = () => {
           description: `Welcome back, ${response.data.user.name}!`,
           type: "success",
         });
-        navigate("/");
+        navigate("/dashboard");
       }
     } catch (error: any) {
       toast("Login Failed", {
