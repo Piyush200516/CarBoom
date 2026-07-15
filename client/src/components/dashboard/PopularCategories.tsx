@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Car, Zap, Shield, Sparkles, Bike, Map, Star, Infinity as InfinityIcon } from "lucide-react";
+import { Car, Zap, Sparkles, Bike, Map, Star, Infinity as InfinityIcon } from "lucide-react";
 
 const categories = [
     { name: "SUV", icon: <Car size={24} />, count: "120+ Cars" },
