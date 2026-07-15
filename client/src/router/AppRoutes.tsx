@@ -4,6 +4,8 @@ import MainLayout from "../layouts/MainLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import Home from "../pages/Home/Home";
 import DashboardHome from "../pages/Dashboard/DashboardHome";
+import MyBookings from "../pages/Dashboard/MyBookings";
+import Wishlist from "../pages/Dashboard/Wishlist";
 import Login from "../pages/Login/Login";
 import Signup from "../pages/Signup/Signup";
 import ForgotPassword from "../pages/ForgotPassword/ForgotPassword";
@@ -33,7 +35,8 @@ const AppRoutes = () => {
       {/* Authenticated Dashboard Pages */}
       <Route path="/dashboard" element={<DashboardLayout />}>
         <Route index element={<DashboardHome />} />
-        {/* We can add more dashboard-specific routes here later */}
+        <Route path="bookings" element={<MyBookings />} />
+        <Route path="wishlist" element={<Wishlist />} />
       </Route>
 
       {/* Public Pages wrapped in MainLayout */}

@@ -163,8 +163,8 @@ const DashboardNavbar = () => {
                             className="flex items-center gap-3 group"
                         >
                             <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-transparent group-hover:border-yellow-400 transition duration-300">
-                                {user?.avatar ? (
-                                    <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+                                {(user as any)?.avatar ? (
+                                    <img src={(user as any).avatar} alt="Profile" className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full bg-[#1F2937] flex items-center justify-center text-gray-400">
                                         <User size={20} />
