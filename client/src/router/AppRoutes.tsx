@@ -23,6 +23,7 @@ import CancellationPolicy from "../pages/CancellationPolicy";
 import PrivacyPage from "../pages/Privacy";
 import TermsPage from "../pages/Terms";
 import NotFound from "../pages/NotFound/NotFound";
+import ProfilePage from "../pages/Profile/ProfilePage";
 import { useAuth } from "../store/AuthContext";
 
 /**
@@ -55,6 +56,8 @@ const AppRoutes = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Authenticated Dashboard Pages — DashboardLayout handles auth guard */}
+        {/* Profile Page */}
+        <Route path="/profile" element={<ProfilePage />} />
       <Route path="/dashboard" element={<DashboardLayout />}>
         <Route index element={<DashboardHome />} />
         <Route path="bookings" element={<MyBookings />} />
