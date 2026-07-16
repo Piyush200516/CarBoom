@@ -4,19 +4,23 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
-import { Card } from "../../components/ui/Card";
 import LoadingSkeleton from "../../components/common/LoadingSkeleton";
 import { useToast } from "../../components/ui/Toast";
 import { useAuth } from "../../store/AuthContext";
 import profileService from "../../services/profileService";
+import { HeaderSection } from "../../components/profile/HeaderSection";
+import { StatsCard } from "../../components/profile/StatsCard";
+import { SectionCard } from "../../components/profile/SectionCard";
+import { GlassInput } from "../../components/ui/GlassInput";
+import { User, Mail, Phone, Calendar, MapPin, Key } from "lucide-react";
 
-// Define validation schema using Zod
+// Validation schema
 const profileSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   mobile: z.string().min(10, "Mobile number must be at least 10 digits"),
   gender: z.enum(["Male", "Female", "Other"]).optional(),
-  dob: z.string().optional(), // ISO date string, optional client‑side validation can be added later
+  dob: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
   address: z.string().optional(),
@@ -31,14 +35,17 @@ export const ProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [profilePic, setProfilePic] = useState<string>(user?.avatar || "");
-  const [memberSince, setMemberSince] = useState<string>("");
-  const [accountStatus, setAccountStatus] = useState<string>("Verified"); // placeholder – replace with real data if available
+  const [memberSince, setMemberSince] = useState<string>(""
+  );
+  const [accountStatus, setAccountStatus] = useState<string>("Verified");
+  const [completion, setCompletion] = useState<number>(0);
 
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
+    watch,
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -54,12 +61,34 @@ export const ProfilePage: React.FC = () => {
     },
   });
 
-  // Fetch profile data once component mounts
+  // Compute profile completion percentage based on filled fields
+  const computeCompletion = (values: ProfileFormValues) => {
+    const fields = [
+      values.fullName,
+      values.email,
+      values.mobile,
+      values.gender,
+      values.dob,
+      values.city,
+      values.state,
+      values.address,
+    ];
+    const filled = fields.filter(Boolean).length;
+    return Math.round((filled / fields.length) * 100);
+  };
+
+  useEffect(() => {
+    const subscription = watch((value) => {
+      setCompletion(computeCompletion(value as ProfileFormValues));
+    });
+    return () => subscription.unsubscribe();
+  }, [watch]);
+
+  // Fetch profile data
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const data = await profileService.getProfile();
-        // Populate form fields
         reset({
           fullName: data.name || "",
           email: data.email || "",
@@ -73,18 +102,25 @@ export const ProfilePage: React.FC = () => {
         });
         setProfilePic(data.avatar || "");
         setMemberSince(new Date(data.createdAt).toLocaleDateString());
-        // Account status could be derived from a flag; using placeholder here
         setAccountStatus(data.isVerified ? "Verified" : "Unverified");
+        setCompletion(computeCompletion({
+          fullName: data.name || "",
+          email: data.email || "",
+          mobile: data.phone || "",
+          gender: data.gender,
+          dob: data.dob?.split("T")[0] || "",
+          city: data.city,
+          state: data.state,
+          address: data.address,
+          accountType: data.role?.toUpperCase() === "OWNER" ? "Owner" : "Renter",
+        }));
       } catch (err) {
         toast("Failed to load profile", { type: "error" });
       } finally {
         setLoading(false);
       }
     };
-    // Avoid duplicate fetch when auth is still loading
-    if (!authLoading) {
-      fetchProfile();
-    }
+    if (!authLoading) fetchProfile();
   }, [reset, toast, authLoading]);
 
   const onSubmit = async (values: ProfileFormValues) => {
@@ -107,7 +143,6 @@ export const ProfilePage: React.FC = () => {
   };
 
   const handleCancel = () => {
-    // Reset to original values
     if (user) {
       reset({
         fullName: user.name,
@@ -118,7 +153,7 @@ export const ProfilePage: React.FC = () => {
         city: (user as any).city,
         state: (user as any).state,
         address: (user as any).address,
-        accountType: (user.role?.toUpperCase() === "OWNER" ? "Owner" : "Renter") as any,
+        accountType: user.role?.toUpperCase() === "OWNER" ? "Owner" : "Renter",
       });
     }
     setEditMode(false);
@@ -142,166 +177,99 @@ export const ProfilePage: React.FC = () => {
     return <LoadingSkeleton />;
   }
 
+  // Quick stats placeholders – replace with real API data when available
+  const quickStats = [
+    { label: "Total Bookings", value: 12, icon: Key },
+    { label: "Wishlist", value: 5, icon: Key },
+    { label: "Reward Points", value: 340, icon: Key },
+    { label: "Reviews", value: 4, icon: Key },
+  ];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="flex justify-center py-12 px-4 sm:px-6 lg:px-8"
+      className="flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8 space-y-8"
     >
-      <Card variant="glass" className="w-full max-w-4xl p-8 space-y-6">
-        <div className="flex items-center space-x-6">
-          <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-yellow-400">
-            {profilePic ? (
-              <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gray-800 flex items-center justify-center text-gray-400">
-                No Image
-              </div>
-            )}
-            {editMode && (
-              <label className="absolute inset-0 bg-black/30 flex items-center justify-center text-white text-sm cursor-pointer opacity-0 hover:opacity-100 transition-opacity">
-                Change Photo
-                <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
-              </label>
-            )}
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-white">{profilePic ? "" : "Profile"}</h2>
-            <p className="text-gray-400">Member since {memberSince}</p>
-            <p className="text-gray-400">Status: {accountStatus}</p>
-          </div>
+      {/* Header */}
+      <HeaderSection
+        profilePic={profilePic}
+        name={watch("fullName") as string}
+        email={watch("email") as string}
+        memberSince={memberSince}
+        status={accountStatus}
+        accountType={watch("accountType") as string}
+        editMode={editMode}
+        onAvatarChange={handlePhotoChange}
+        onEditToggle={() => setEditMode(true)}
+      />
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full max-w-4xl">
+        {quickStats.map((stat) => (
+          <StatsCard key={stat.label} icon={stat.icon} label={stat.label} value={stat.value} />
+        ))}
+      </div>
+
+      {/* Profile Completion */}
+      <div className="w-full max-w-4xl">
+        <p className="text-gray-300 mb-2">Profile Completion: {completion}%</p>
+        <div className="w-full bg-gray-700 rounded-full h-2">
+          <div
+            className="bg-primary h-2 rounded-full transition-width duration-300"
+            style={{ width: `${completion}%` }}
+          ></div>
         </div>
-        <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Full Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300">Full Name</label>
-            <input
-              type="text"
-              {...register("fullName")}
-              disabled={!editMode}
-              className={`mt-1 block w-full rounded-xl bg-gray-800 border ${errors.fullName ? "border-red-500" : "border-gray-600"} text-white focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400`}
-            />
-            {errors.fullName && <p className="mt-1 text-xs text-red-500">{errors.fullName.message}</p>}
+      </div>
+
+      {/* Form Sections */}
+      <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-4xl space-y-6">
+        {/* Personal Information */}
+        <SectionCard title="Personal Information">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <GlassInput label="Full Name" type="text" icon={User} disabled={!editMode} register={register("fullName")} name="fullName" />
+            <GlassInput label="Email" type="email" icon={Mail} disabled={!editMode} register={register("email")} name="email" />
+            <GlassInput label="Mobile Number" type="text" icon={Phone} disabled={!editMode} register={register("mobile")} name="mobile" />
+            <GlassInput label="Gender" type="text" icon={User} disabled={!editMode} register={register("gender")} name="gender" />
+            <GlassInput label="Date of Birth" type="date" icon={Calendar} disabled={!editMode} register={register("dob")} name="dob" />
           </div>
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300">Email Address</label>
-            <input
-              type="email"
-              {...register("email")}
-              disabled={!editMode}
-              className={`mt-1 block w-full rounded-xl bg-gray-800 border ${errors.email ? "border-red-500" : "border-gray-600"} text-white focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400`}
-            />
-            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
+        </SectionCard>
+
+        {/* Contact Information */}
+        <SectionCard title="Contact Information">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <GlassInput label="City" type="text" icon={MapPin} disabled={!editMode} register={register("city")} name="city" />
+            <GlassInput label="State" type="text" icon={MapPin} disabled={!editMode} register={register("state")} name="state" />
+            <GlassInput label="Address" type="text" icon={MapPin} disabled={!editMode} register={register("address")} name="address" />
           </div>
-          {/* Mobile */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300">Mobile Number</label>
-            <input
-              type="text"
-              {...register("mobile")}
-              disabled={!editMode}
-              className={`mt-1 block w-full rounded-xl bg-gray-800 border ${errors.mobile ? "border-red-500" : "border-gray-600"} text-white focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400`}
-            />
-            {errors.mobile && <p className="mt-1 text-xs text-red-500">{errors.mobile.message}</p>}
+        </SectionCard>
+
+        {/* Account Information */}
+        <SectionCard title="Account Information">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <GlassInput label="Account Type" type="text" icon={Key} disabled={true} register={register("accountType")} name="accountType" />
           </div>
-          {/* Gender */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300">Gender</label>
-            <select
-              {...register("gender")}
-              disabled={!editMode}
-              className="mt-1 block w-full rounded-xl bg-gray-800 border border-gray-600 text-white focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
-            >
-              <option value="">Select</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          {/* Date of Birth */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300">Date of Birth</label>
-            <input
-              type="date"
-              {...register("dob")}
-              disabled={!editMode}
-              className="mt-1 block w-full rounded-xl bg-gray-800 border border-gray-600 text-white focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
-            />
-          </div>
-          {/* City */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300">City</label>
-            <input
-              type="text"
-              {...register("city")}
-              disabled={!editMode}
-              className="mt-1 block w-full rounded-xl bg-gray-800 border border-gray-600 text-white focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
-            />
-          </div>
-          {/* State */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300">State</label>
-            <input
-              type="text"
-              {...register("state")}
-              disabled={!editMode}
-              className="mt-1 block w-full rounded-xl bg-gray-800 border border-gray-600 text-white focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
-            />
-          </div>
-          {/* Address */}
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-300">Address</label>
-            <textarea
-              {...register("address")}
-              rows={2}
-              disabled={!editMode}
-              className="mt-1 block w-full rounded-xl bg-gray-800 border border-gray-600 text-white focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
-            />
-          </div>
-          {/* Account Type */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300">Account Type</label>
-            <input
-              type="text"
-              value={user?.role?.toUpperCase() === "OWNER" ? "Owner" : "Renter"}
-              disabled
-              className="mt-1 block w-full rounded-xl bg-gray-800 border border-gray-600 text-gray-400"
-            />
-          </div>
-          {/* Member Since & Status displayed above */}
-          {/* Action Buttons */}
-          <div className="md:col-span-2 flex justify-end space-x-3 pt-4">
-            {editMode ? (
-              <>
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="px-4 py-2 rounded-xl bg-gray-600 text-white hover:bg-gray-500 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-4 py-2 rounded-xl bg-yellow-400 text-black font-bold hover:bg-yellow-300 transition"
-                >
-                  Save Changes
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setEditMode(true)}
-                className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-500 transition"
-              >
-                Edit Profile
+        </SectionCard>
+
+        {/* Action Buttons */}
+        <div className="flex justify-end space-x-4 pt-4">
+          {editMode ? (
+            <>
+              <button type="button" onClick={handleCancel} className="px-4 py-2 rounded-xl bg-gray-600 text-white hover:bg-gray-500 transition">
+                Cancel
               </button>
-            )}
-          </div>
-        </form>
-      </Card>
+              <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-xl bg-primary text-black font-bold hover:bg-primary/80 transition">
+                Save Changes
+              </button>
+            </>
+          ) : (
+            <button type="button" onClick={() => setEditMode(true)} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-500 transition">
+              Edit Profile
+            </button>
+          )}
+        </div>
+      </form>
     </motion.div>
   );
 };

@@ -38,7 +38,16 @@ export class UserRepository {
       data: { password: passwordHash },
     });
   }
+
+  // Update user profile with allowed fields
+  async updateProfile(id: string, data: any) {
+    return prisma.user.update({
+      where: { id },
+      data,
+    });
+  }
 }
 
 export const userRepository = new UserRepository();
 export default userRepository;
+

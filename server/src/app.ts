@@ -9,6 +9,7 @@ import { apiLimiter } from "./middleware/rateLimit.middleware.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 import apiRouter from "./routes/index.js";
 import { ApiError } from "./utils/apiError.js";
+import path from "path";
 
 const app = express();
 
@@ -39,6 +40,8 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+// Serve static files for uploaded avatars
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Global Rate Limiting
 app.use(apiLimiter);
