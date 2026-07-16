@@ -1,49 +1,79 @@
 import axios from "axios";
+import { emitAuthLogout } from "../store/AuthContext";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1",
-  withCredentials: true, // Required to send and receive cookies
+  withCredentials: true, // Required to send and receive httpOnly cookies
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Request interceptor to log requests in development
-api.interceptors.request.use((config) => {
-  if (import.meta.env.DEV) {
-    console.log(`[Frontend Request] ${config.method?.toUpperCase()} ${config.url}`);
-  }
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
+// ─── Request interceptor ──────────────────────────────────────────────────────
+api.interceptors.request.use(
+  (config) => {
+    if (import.meta.env.DEV) {
+      console.log(
+        `[API] ${config.method?.toUpperCase()} ${config.url}`
+      );
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
-// Response interceptor to handle 401s and token refresh
+// ─── Response interceptor ─────────────────────────────────────────────────────
+// Strategy:
+//   1. On a 401 from any endpoint *except* /auth/me, /auth/refresh, /auth/login,
+//      attempt a silent token refresh and retry the original request once.
+//   2. If the refresh itself fails (401/403), emit a global logout event so
+//      AuthContext can clear state — no circular imports needed.
+//   3. /auth/me 401s are NOT retried here; AuthContext handles them naturally.
+
+const AUTH_ENDPOINTS = ["/auth/refresh", "/auth/login", "/auth/register", "/auth/me"];
+
 api.interceptors.response.use(
   (response) => {
     if (import.meta.env.DEV) {
-      console.log(`[Frontend Response] ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`);
+      console.log(
+        `[API] ${response.config.method?.toUpperCase()} ${response.config.url} → ${response.status}`
+      );
     }
     return response;
   },
   async (error) => {
     const originalRequest = error.config;
-    
-    // If error is 401 and it's not a retry or the refresh endpoint itself
-    if (error.response?.status === 401 && !originalRequest._retry && originalRequest.url !== "/auth/refresh") {
+
+    const isAuthEndpoint = AUTH_ENDPOINTS.some((ep) =>
+      originalRequest?.url?.includes(ep)
+    );
+
+    // Attempt a single token refresh for non-auth 401s
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isAuthEndpoint
+    ) {
       originalRequest._retry = true;
       try {
-        console.log("[Auth] Attempting to refresh token...");
+        if (import.meta.env.DEV) {
+          console.log("[API] Access token expired — attempting refresh...");
+        }
         await api.post("/auth/refresh");
-        // Retry the original request
+        // Refresh succeeded → retry the original request
         return api(originalRequest);
       } catch (refreshError) {
-        console.error("[Auth] Token refresh failed. User needs to login.");
-        // Redirect to login or let the AuthContext handle the failure
+        if (import.meta.env.DEV) {
+          console.warn(
+            "[API] Token refresh failed — forcing logout."
+          );
+        }
+        // Notify AuthContext to clear user state without a circular import
+        emitAuthLogout();
         return Promise.reject(refreshError);
       }
     }
-    
+
     return Promise.reject(error);
   }
 );

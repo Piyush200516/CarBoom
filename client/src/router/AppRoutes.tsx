@@ -1,5 +1,6 @@
 // src/router/AppRoutes.tsx
-import { Routes, Route } from "react-router-dom";
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import Home from "../pages/Home/Home";
@@ -22,24 +23,45 @@ import CancellationPolicy from "../pages/CancellationPolicy";
 import PrivacyPage from "../pages/Privacy";
 import TermsPage from "../pages/Terms";
 import NotFound from "../pages/NotFound/NotFound";
+import { useAuth } from "../store/AuthContext";
+
+/**
+ * GuestRoute – redirects already-authenticated users away from auth pages.
+ * Waits for the initial auth check (isLoading) before deciding.
+ */
+const GuestRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // While auth is being checked, render nothing to avoid a flash-redirect.
+  if (isLoading) {
+    return <div className="min-h-screen bg-[#0b0f19]" aria-busy="true" />;
+  }
+
+  // Already logged in → send to dashboard.
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+};
 
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Standalone full-screen pages */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
+      {/* Standalone full-screen pages — only for guests */}
+      <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
+      <Route path="/signup" element={<GuestRoute><Signup /></GuestRoute>} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
-      {/* Authenticated Dashboard Pages */}
+      {/* Authenticated Dashboard Pages — DashboardLayout handles auth guard */}
       <Route path="/dashboard" element={<DashboardLayout />}>
         <Route index element={<DashboardHome />} />
         <Route path="bookings" element={<MyBookings />} />
         <Route path="wishlist" element={<Wishlist />} />
       </Route>
 
-      {/* Public Pages wrapped in MainLayout */}
+      {/* Public Pages wrapped in MainLayout — shows DashboardNavbar when authenticated */}
       <Route path="/" element={<MainLayout />}>
         <Route index element={<Home />} />
         <Route path="browse" element={<BrowseVehicles />} />

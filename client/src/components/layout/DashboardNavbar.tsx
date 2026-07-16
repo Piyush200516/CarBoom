@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
     Menu, X, Bell, MessageSquare, ChevronDown, 
@@ -21,7 +21,13 @@ const DashboardNavbar = () => {
     const [profileOpen, setProfileOpen] = useState(false);
     
     const location = useLocation();
+    const navigate = useNavigate();
     const { user, logout } = useAuth();
+
+    const handleLogout = async () => {
+        await logout();
+        navigate("/", { replace: true });
+    };
 
     useEffect(() => {
         const handleScroll = () => {
@@ -192,10 +198,7 @@ const DashboardNavbar = () => {
                                             <Link to="/profile" className="block px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">My Profile</Link>
                                             <Link to="/help" className="block px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">Help Center</Link>
                                             <button 
-                                                onClick={() => {
-                                                    logout();
-                                                    window.location.href = "/";
-                                                }}
+                                                onClick={handleLogout}
                                                 className="w-full text-left px-3 py-2 mt-1 rounded-lg text-sm text-red-400 hover:bg-red-400/10 transition"
                                             >
                                                 Sign Out
@@ -246,10 +249,7 @@ const DashboardNavbar = () => {
                             ))}
                             <hr className="border-white/5 my-2" />
                             <button 
-                                onClick={() => {
-                                    logout();
-                                    window.location.href = "/";
-                                }}
+                                onClick={handleLogout}
                                 className="text-left text-red-400 font-medium py-2"
                             >
                                 Sign Out
