@@ -2,9 +2,11 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { useToast } from "../ui/Toast";
+import { useAuth } from "../../store/AuthContext";
 
 const Footer = () => {
     const { toast } = useToast();
+    const { isAuthenticated } = useAuth();
 
     const handleSubscribe = (e: React.FormEvent) => {
         e.preventDefault();
@@ -105,37 +107,49 @@ const Footer = () => {
                         </ul>
                     </div>
 
-                    {/* Links Column 3: Quick Links */}
+                    {/* Links Column 3: Quick Links — auth-aware */}
                     <div className="lg:col-span-2 flex flex-col gap-4 text-left">
                         <h4 className="text-sm font-bold text-white uppercase tracking-wider">Quick Links</h4>
                         <ul className="flex flex-col gap-2.5 text-sm">
                             <li><Link to="/browse" className="hover:text-yellow-400 transition">Browse Vehicles</Link></li>
-                            <li><Link to="/signup" className="hover:text-yellow-400 transition">Sign Up</Link></li>
-                            <li><Link to="/login" className="hover:text-yellow-400 transition">Log In</Link></li>
+                            {isAuthenticated ? (
+                                <>
+                                    <li><Link to="/my-bookings" className="hover:text-yellow-400 transition">My Bookings</Link></li>
+                                    <li><Link to="/wishlist" className="hover:text-yellow-400 transition">Wishlist</Link></li>
+                                    <li><Link to="/become-owner" className="hover:text-yellow-400 transition">Become Owner</Link></li>
+                                </>
+                            ) : (
+                                <>
+                                    <li><Link to="/signup" className="hover:text-yellow-400 transition">Sign Up</Link></li>
+                                    <li><Link to="/login" className="hover:text-yellow-400 transition">Log In</Link></li>
+                                </>
+                            )}
                         </ul>
                     </div>
 
-                    {/* Newsletter Column */}
-                    <div className="lg:col-span-2 flex flex-col gap-4 text-left">
-                        <h4 className="text-sm font-bold text-white uppercase tracking-wider">Subscribe</h4>
-                        <p className="text-xs text-gray-400 leading-relaxed font-semibold">
-                            Get the latest updates and offers straight to your inbox.
-                        </p>
-                        <form onSubmit={handleSubscribe} className="relative mt-2">
-                            <input 
-                                type="email" 
-                                required
-                                placeholder="Enter your email" 
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 pr-10 text-xs text-white focus:outline-none focus:border-yellow-400 transition"
-                            />
-                            <button 
-                                type="submit" 
-                                className="absolute right-1 top-1 bg-yellow-400 hover:bg-yellow-300 text-black w-8 h-8 rounded-lg flex items-center justify-center transition cursor-pointer"
-                            >
-                                <ArrowRight size={14} />
-                            </button>
-                        </form>
-                    </div>
+                    {/* Newsletter Column — shown only when NOT logged in */}
+                    {!isAuthenticated && (
+                        <div className="lg:col-span-2 flex flex-col gap-4 text-left">
+                            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Subscribe</h4>
+                            <p className="text-xs text-gray-400 leading-relaxed font-semibold">
+                                Get the latest updates and offers straight to your inbox.
+                            </p>
+                            <form onSubmit={handleSubscribe} className="relative mt-2">
+                                <input 
+                                    type="email" 
+                                    required
+                                    placeholder="Enter your email" 
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 pr-10 text-xs text-white focus:outline-none focus:border-yellow-400 transition"
+                                />
+                                <button 
+                                    type="submit" 
+                                    className="absolute right-1 top-1 bg-yellow-400 hover:bg-yellow-300 text-black w-8 h-8 rounded-lg flex items-center justify-center transition cursor-pointer"
+                                >
+                                    <ArrowRight size={14} />
+                                </button>
+                            </form>
+                        </div>
+                    )}
 
                 </div>
 
