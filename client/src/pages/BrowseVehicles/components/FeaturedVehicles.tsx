@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LayoutGrid, List, SlidersHorizontal, ArrowUpDown, X, GitCompare, Star, Car } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
 import { VehicleWithExtras, VehicleCard } from "./VehicleCard";
+import { toast } from "../../../components/ui/Toast";
 
 interface FeaturedVehiclesProps {
   vehicles: VehicleWithExtras[];
@@ -45,7 +46,7 @@ export const FeaturedVehicles: React.FC<FeaturedVehiclesProps> = ({
       setCompareList(compareList.filter(v => v.id !== vehicle.id));
     } else {
       if (compareList.length >= 3) {
-        alert("You can compare up to 3 vehicles at a time.");
+        toast.info("You can compare up to 3 vehicles at a time.");
         return;
       }
       setCompareList([...compareList, vehicle]);
