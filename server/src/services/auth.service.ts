@@ -188,6 +188,27 @@ export class AuthService {
     // Optionally: clear all refresh tokens for this user to log them out of other devices
     await tokenRepository.deleteUserTokens(userId);
   }
+
+  /**
+   * Logout from all devices — deletes every refresh token belonging to this user.
+   * This invalidates all active sessions across all devices.
+   */
+  async logoutAll(userId: string) {
+    // Verify the user actually exists before nuking tokens
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    // Delete all refresh tokens for this user in a single atomic operation
+    const result = await tokenRepository.deleteUserTokens(userId);
+
+    logger.info(
+      `[Auth Service] Logout-all executed for userId: ${userId} at ${new Date().toISOString()} — ${result.count} token(s) invalidated`
+    );
+
+    return { deletedCount: result.count };
+  }
 }
 
 export const authService = new AuthService();
