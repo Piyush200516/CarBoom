@@ -1,16 +1,26 @@
 import axios from "axios";
 import { emitAuthLogout } from "../store/AuthContext";
 
-// In development: use a relative path so the Vite proxy forwards /api/v1/* to
-// http://localhost:5000 — this avoids CORS and ensures the correct route prefix.
-// In production: VITE_API_URL must be set to your deployed backend URL in Vercel
-// (e.g. https://carboom-api.onrender.com/api/v1).
-const BASE_URL =
-  import.meta.env.VITE_API_URL ?? "/api/v1";
+// ─── Base URL resolution ───────────────────────────────────────────────────────
+// Development : VITE_API_URL is NOT set → the Vite dev proxy rewrites /api/v1/*
+//               to http://localhost:5000, so we use the relative path below.
+// Production  : VITE_API_URL is injected at build time from client/.env.production
+//               (or from the Vercel dashboard env vars), pointing to Render:
+//               https://carboom-backend.onrender.com/api/v1
+// ─────────────────────────────────────────────────────────────────────────────
+const BASE_URL: string = import.meta.env.VITE_API_URL ?? "/api/v1";
+
+// Safety net: catch misconfigured production builds early.
+if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
+  console.error(
+    "[API] VITE_API_URL is not set for a production build. " +
+      "All API calls will fail. Set this variable on Vercel or in client/.env.production."
+  );
+}
 
 const api = axios.create({
   baseURL: BASE_URL,
-  withCredentials: true, // Required to send and receive httpOnly cookies
+  withCredentials: true, // Required to send/receive httpOnly cookies cross-origin
   headers: {
     "Content-Type": "application/json",
   },

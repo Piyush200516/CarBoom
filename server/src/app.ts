@@ -27,14 +27,29 @@ app.use(
 );
 
 // CORS configuration
+// When CORS_ORIGIN="*" we use origin:true which reflects the requesting origin back
+// — this is required when the client sends withCredentials:true (cookies/auth headers).
+// In production, set CORS_ORIGIN on Render to your Vercel URL, e.g.:
+//   CORS_ORIGIN=https://carboom.vercel.app
+// Multiple origins are comma-separated: https://a.vercel.app,https://b.vercel.app
+const allowedOrigins =
+  config.CORS_ORIGIN === "*"
+    ? true
+    : config.CORS_ORIGIN.split(",").map((o) => o.trim());
+
 app.use(
   cors({
-    origin: config.CORS_ORIGIN === "*" ? true : config.CORS_ORIGIN.split(","),
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    exposedHeaders: ["Set-Cookie"],
+    optionsSuccessStatus: 200, // Some browsers (IE11) choke on 204
   })
 );
+
+// Explicitly handle OPTIONS pre-flight for all routes
+app.options("*", cors({ origin: allowedOrigins, credentials: true }));
 
 // Body and Cookie parsers
 app.use(express.json());
