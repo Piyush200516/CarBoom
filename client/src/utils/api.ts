@@ -1,8 +1,15 @@
 import axios from "axios";
 import { emitAuthLogout } from "../store/AuthContext";
 
+// In development: use a relative path so the Vite proxy forwards /api/v1/* to
+// http://localhost:5000 — this avoids CORS and ensures the correct route prefix.
+// In production: VITE_API_URL must be set to your deployed backend URL in Vercel
+// (e.g. https://carboom-api.onrender.com/api/v1).
+const BASE_URL =
+  import.meta.env.VITE_API_URL ?? "/api/v1";
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1",
+  baseURL: BASE_URL,
   withCredentials: true, // Required to send and receive httpOnly cookies
   headers: {
     "Content-Type": "application/json",
