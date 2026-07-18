@@ -1,7 +1,6 @@
 // src/components/ui/GlassInput.tsx
 import React from "react";
 import { cn } from "../../utils/cn";
-import { ClassValue } from "clsx";
 
 interface GlassInputProps {
   label: string;
@@ -12,7 +11,7 @@ interface GlassInputProps {
   name: string;
 }
 
-export const GlassInput: React.FC<GlassInputProps> = ({ label, type = "text", icon: Icon, disabled = false, register, name }) => {
+export const GlassInput: React.FC<GlassInputProps> = ({ label, type = "text", icon: Icon, disabled = false, register }) => {
   return (
     <div className="relative">
       <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
