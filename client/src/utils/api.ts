@@ -8,7 +8,19 @@ import { emitAuthLogout } from "../store/AuthContext";
 //               (or from the Vercel dashboard env vars), pointing to Render:
 //               https://carboom-backend.onrender.com/api/v1
 // ─────────────────────────────────────────────────────────────────────────────
-const BASE_URL: string = import.meta.env.VITE_API_URL ?? "/api/v1";
+let BASE_URL: string = import.meta.env.VITE_API_URL ?? "/api/v1";
+
+if (BASE_URL.startsWith("http")) {
+  try {
+    const url = new URL(BASE_URL);
+    if (!url.pathname.endsWith("/api/v1") && !url.pathname.endsWith("/api/v1/")) {
+      url.pathname = url.pathname.replace(/\/$/, "") + "/api/v1";
+      BASE_URL = url.toString();
+    }
+  } catch (e) {
+    console.error("[API] Failed to parse VITE_API_URL as a valid URL:", e);
+  }
+}
 
 // Safety net: catch misconfigured production builds early.
 if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {

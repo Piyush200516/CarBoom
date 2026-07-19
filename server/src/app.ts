@@ -71,6 +71,8 @@ app.get("/", (req, res) => {
 
 // API Routes
 app.use("/api/v1", apiRouter);
+app.use("/api", apiRouter);
+app.use("/", apiRouter);
 
 // 404 Route Not Found
 app.use((req, res, next) => {
