@@ -12,4 +12,16 @@ export default defineConfig({
             "@": path.resolve(__dirname, "./src"),
         },
     },
+    server: {
+        port: 5173,
+        proxy: {
+            // Forward all /api/v1 requests to the Express backend in development.
+            // This avoids CORS issues and ensures the correct route prefix is used.
+            "/api/v1": {
+                target: "http://localhost:5000",
+                changeOrigin: true,
+                secure: false,
+            },
+        },
+    },
 });

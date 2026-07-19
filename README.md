@@ -1,6 +1,53 @@
 # CarBoom
 
 **CarBoom** is a modern peer-to-peer vehicle rental marketplace that enables users to rent and list **Cars, Bikes, Scooters etc** for durations ranging from **1 hour to 1 month**. Designed specifically for **Tier-2 and Tier-3 cities in India**, CarBoom aims to make vehicle rentals simple, affordable, and accessible.
+---
+## 🚀 CarBoom's Unique Selling Proposition (USP)
+
+CarBoom is a next-generation peer-to-peer vehicle rental marketplace that enables users to book vehicles in two flexible ways:
+
+- 🚗 **Self Drive** – Rent and drive the vehicle yourself.
+- 👨‍✈️ **With Driver** – Book the same vehicle with a verified driver.
+
+Unlike traditional ride-hailing platforms, CarBoom allows vehicle owners to list their cars, bikes, scooters, and EVs, manage bookings, set rental prices, and earn passive income through a secure rental ecosystem.
+
+### ✨ Key Highlights
+
+- 🚗 Self Drive & With Driver Booking
+- 👥 Peer-to-Peer Vehicle Rental Marketplace
+- 🤖 AI-Powered Vehicle Recommendations
+- 📍 Ola Maps Integration for Pickup & Drop Locations
+- 🔐 JWT Authentication & Role-Based Access Control
+- 💳 Secure Online Payments
+- ⭐ Ratings & Reviews
+- ❤️ Wishlist & Favorites
+- 📅 Real-Time Booking & Availability
+- 📊 Owner Dashboard with Revenue Analytics
+- 🎟️ Coupons & Discount System
+- 🔔 Real-Time Notifications
+- 📱 Fully Responsive & Modern UI
+
+### Why CarBoom?
+
+- 🚗 Self Drive & With Driver Booking
+- 👥 Peer-to-Peer Vehicle Rental Marketplace
+- 🚙 Cars, Bikes, Scooters & EV Rentals
+- 🤖 AI-Based Vehicle Recommendations
+- 📍 Ola Maps Integration for Pickup & Drop Locations
+- 📅 Real-Time Availability & Booking
+- 💳 Secure Online Payments
+- 🔐 JWT Authentication & Role-Based Access Control
+- ❤️ Wishlist & Favorites
+- ⭐ Ratings & Reviews
+- 📊 Owner Dashboard & Revenue Analytics
+- 🎟️ Coupons & Offers
+- 🔔 Real-Time Notifications
+- 📱 Responsive & Modern UI
+- 🌍 Scalable Microservice-Ready Architecture
+
+### 🎯 Vision
+
+To build India's most trusted and intelligent vehicle rental platform where users can easily rent vehicles with or without a driver, while vehicle owners earn by sharing their vehicles securely.
 
 ---
 
