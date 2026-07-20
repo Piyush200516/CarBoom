@@ -97,7 +97,7 @@ To build India's most trusted and intelligent vehicle rental platform where user
 - Lucide React
 - Shadcn UI
 
-### Backend / DataBases *(Coming Soon)*
+### Backend / DataBases 
 - Node.js
 - Express.js
 - TypeScript
