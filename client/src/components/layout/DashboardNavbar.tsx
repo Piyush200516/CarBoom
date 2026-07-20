@@ -24,9 +24,9 @@ const DashboardNavbar = () => {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
 
-    const handleLogout = async () => {
-        await logout();
-        navigate("/", { replace: true });
+    const handleLogout = () => {
+        logout();
+        navigate("/login", { replace: true });
     };
 
     useEffect(() => {

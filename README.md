@@ -91,20 +91,22 @@ To build India's most trusted and intelligent vehicle rental platform where user
 - React Router DOM
 - Framer Motion
 - React Hook Form
+- WebRTC API
+- Socket.IO Client
 - Zod
 - Lucide React
 - Shadcn UI
 
-### Backend *(Coming Soon)*
+### Backend / DataBases *(Coming Soon)*
 - Node.js
 - Express.js
 - TypeScript
-- MongoDB
-- Mongoose
 - JWT Authentication
 - Cloudinary
 - Razorpay
 - Socket.io
+- STUN/TURN Server
+- Neon PostgreSQL (Prisma)
 
 ---
 

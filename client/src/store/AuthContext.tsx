@@ -15,7 +15,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (user: User) => void;
-  logout: () => Promise<void>;
+  logout: () => void;
   checkAuth: () => Promise<void>;
 }
 
@@ -32,6 +32,24 @@ const AUTH_LOGOUT_EVENT = "carboom:auth:logout";
 
 export const emitAuthLogout = () =>
   window.dispatchEvent(new CustomEvent(AUTH_LOGOUT_EVENT));
+
+const AUTH_STORAGE_KEYS = [
+  SESSION_HINT_KEY,
+  "accessToken",
+  "refreshToken",
+  "authToken",
+  "token",
+  "carboom_access_token",
+  "carboom_refresh_token",
+  "carboom_user",
+];
+
+const clearStoredAuthState = () => {
+  AUTH_STORAGE_KEYS.forEach((key) => {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  });
+};
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
@@ -62,12 +80,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         localStorage.setItem(SESSION_HINT_KEY, "1");
       } else {
         setUser(null);
-        localStorage.removeItem(SESSION_HINT_KEY);
+        clearStoredAuthState();
       }
     } catch {
       // Network error or 401 — user is not authenticated
       setUser(null);
-      localStorage.removeItem(SESSION_HINT_KEY);
+      clearStoredAuthState();
     } finally {
       setIsLoading(false);
     }
@@ -88,7 +106,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const handleForceLogout = () => {
       setUser(null);
-      localStorage.removeItem(SESSION_HINT_KEY);
+      setIsLoading(false);
+      clearStoredAuthState();
     };
     window.addEventListener(AUTH_LOGOUT_EVENT, handleForceLogout);
     return () =>
@@ -102,15 +121,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   // ── Called when user clicks Logout ────────────────────────────────────────
-  const logout = useCallback(async () => {
-    try {
-      await authService.logout();
-    } catch (error) {
-      console.error("[Auth] Logout API error", error);
-    } finally {
-      setUser(null);
-      localStorage.removeItem(SESSION_HINT_KEY);
+  const logout = useCallback(() => {
+    setUser(null);
+    setIsLoading(false);
+    clearStoredAuthState();
+
+    // Server-side logout only revokes the httpOnly refresh cookie/token. Local
+    // logout must not wait for network availability or a Render cold start.
+    if (!navigator.onLine) {
+      return;
     }
+
+    void authService.logout().catch((error) => {
+      if (import.meta.env.DEV) {
+        console.warn("[Auth] Server logout did not complete; local session is already cleared.", error);
+      }
+    });
   }, []);
 
   return (

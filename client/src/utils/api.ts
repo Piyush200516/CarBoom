@@ -86,13 +86,19 @@ api.interceptors.request.use(
 
 // ─── Response interceptor ─────────────────────────────────────────────────────
 // Strategy:
-//   1. On a 401 from any endpoint *except* /auth/me, /auth/refresh, /auth/login,
+//   1. On a 401 from any endpoint *except* auth endpoints,
 //      attempt a silent token refresh and retry the original request once.
 //   2. If the refresh itself fails (401/403), emit a global logout event so
 //      AuthContext can clear state — no circular imports needed.
 //   3. /auth/me 401s are NOT retried here; AuthContext handles them naturally.
 
-const AUTH_ENDPOINTS = ["/auth/refresh", "/auth/login", "/auth/register", "/auth/me"];
+const AUTH_ENDPOINTS = [
+  "/auth/refresh",
+  "/auth/login",
+  "/auth/register",
+  "/auth/logout",
+  "/auth/me",
+];
 
 api.interceptors.response.use(
   (response) => {
