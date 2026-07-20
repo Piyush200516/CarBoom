@@ -13,6 +13,10 @@ import path from "path";
 
 const app = express();
 
+// Render runs behind a proxy. Trusting one hop keeps IP-based middleware such as
+// express-rate-limit accurate without trusting arbitrary client-supplied chains.
+app.set("trust proxy", 1);
+
 // Security Headers
 app.use(helmet());
 
@@ -37,19 +41,19 @@ const allowedOrigins =
     ? true
     : config.CORS_ORIGIN.split(",").map((o) => o.trim());
 
-app.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-    exposedHeaders: ["Set-Cookie"],
-    optionsSuccessStatus: 200, // Some browsers (IE11) choke on 204
-  })
-);
+const corsOptions: cors.CorsOptions = {
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  exposedHeaders: ["Set-Cookie"],
+  optionsSuccessStatus: 200, // Some browsers (IE11) choke on 204
+};
+
+app.use(cors(corsOptions));
 
 // Explicitly handle OPTIONS pre-flight for all routes
-app.options("*", cors({ origin: allowedOrigins, credentials: true }));
+app.options(/.*/, cors(corsOptions));
 
 // Body and Cookie parsers
 app.use(express.json());

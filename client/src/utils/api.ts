@@ -2,25 +2,58 @@ import axios from "axios";
 import { emitAuthLogout } from "../store/AuthContext";
 
 // ─── Base URL resolution ───────────────────────────────────────────────────────
-// Development : VITE_API_URL is NOT set → the Vite dev proxy rewrites /api/v1/*
-//               to http://localhost:5000, so we use the relative path below.
-// Production  : VITE_API_URL is injected at build time from client/.env.production
-//               (or from the Vercel dashboard env vars), pointing to Render:
-//               https://carboom-backend.onrender.com/api/v1
+// Development : VITE_API_URL is NOT set, so Vite proxies /api/v1/* to Express.
+// Production  : VITE_API_URL may be either the bare Render origin or the full
+//               API URL. Normalize both to the canonical /api/v1 prefix.
 // ─────────────────────────────────────────────────────────────────────────────
-let BASE_URL: string = import.meta.env.VITE_API_URL ?? "/api/v1";
+const API_VERSION_PREFIX = "/api/v1";
 
-if (BASE_URL.startsWith("http")) {
-  try {
-    const url = new URL(BASE_URL);
-    if (!url.pathname.endsWith("/api/v1") && !url.pathname.endsWith("/api/v1/")) {
-      url.pathname = url.pathname.replace(/\/$/, "") + "/api/v1";
-      BASE_URL = url.toString();
-    }
-  } catch (e) {
-    console.error("[API] Failed to parse VITE_API_URL as a valid URL:", e);
+const ensureApiVersionPath = (pathname: string) => {
+  const normalizedPath = pathname.replace(/\/+$/, "");
+
+  if (!normalizedPath || normalizedPath === "/") {
+    return API_VERSION_PREFIX;
   }
-}
+
+  if (normalizedPath === "/api") {
+    return API_VERSION_PREFIX;
+  }
+
+  if (normalizedPath.endsWith(API_VERSION_PREFIX)) {
+    return normalizedPath;
+  }
+
+  return `${normalizedPath}${API_VERSION_PREFIX}`;
+};
+
+const normalizeApiBaseUrl = (rawBaseUrl?: string) => {
+  const fallbackBaseUrl = API_VERSION_PREFIX;
+  const trimmedBaseUrl = rawBaseUrl?.trim();
+
+  if (!trimmedBaseUrl) {
+    return fallbackBaseUrl;
+  }
+
+  if (!trimmedBaseUrl.startsWith("http")) {
+    const relativeBaseUrl = trimmedBaseUrl.startsWith("/")
+      ? trimmedBaseUrl
+      : `/${trimmedBaseUrl}`;
+    return ensureApiVersionPath(relativeBaseUrl);
+  }
+
+  try {
+    const url = new URL(trimmedBaseUrl);
+    url.pathname = ensureApiVersionPath(url.pathname);
+    url.search = "";
+    url.hash = "";
+    return url.toString().replace(/\/$/, "");
+  } catch (error) {
+    console.error("[API] Failed to parse VITE_API_URL as a valid URL:", error);
+    return fallbackBaseUrl;
+  }
+};
+
+const BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
 
 // Safety net: catch misconfigured production builds early.
 if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
