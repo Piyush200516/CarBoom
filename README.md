@@ -110,6 +110,171 @@ To build India's most trusted and intelligent vehicle rental platform where user
 
 ---
 
+## 📊 System Diagrams
+
+### 1. High-Level System Architecture
+This diagram illustrates the overall architecture of CarBoom, showing the interaction between the frontend, backend, database, and external services.
+
+```mermaid
+graph TD
+    %% Entities
+    User((User / Renter / Owner))
+    Admin((Admin))
+    
+    %% Frontend
+    subgraph Frontend [React.js + Vite Client]
+        UI[UI Components <br/> Shadcn / Tailwind]
+        State[State Management]
+        SocketC[Socket.IO Client]
+        WebRTC[WebRTC Client]
+    end
+    
+    %% Backend
+    subgraph Backend [Node.js + Express.js Server]
+        API[REST APIs]
+        Auth[JWT Auth]
+        SocketS[Socket.IO Server]
+        Prisma[Prisma ORM]
+    end
+    
+    %% Database & External
+    DB[(Neon PostgreSQL)]
+    Cloudinary[Cloudinary <br/> Image Storage]
+    Razorpay[Razorpay <br/> Payment Gateway]
+    OlaMaps[Ola Maps <br/> Location Services]
+    STUN[STUN/TURN <br/> WebRTC]
+
+    %% Connections
+    User <-->|HTTP / WS| Frontend
+    Admin <-->|HTTP| Frontend
+    
+    UI <--> State
+    Frontend <-->|REST API| API
+    Frontend <-->|WebSocket| SocketS
+    Frontend <-->|P2P| WebRTC
+    WebRTC -.->|ICE Candidates| STUN
+    
+    API <--> Auth
+    API <--> Prisma
+    SocketS <--> API
+    
+    Prisma <--> DB
+    API <--> Cloudinary
+    API <--> Razorpay
+    Frontend <--> OlaMaps
+```
+
+### 2. Database Entity Relationship (ER) Diagram
+A simplified view of the core entities in the CarBoom database and their relationships.
+
+```mermaid
+erDiagram
+    USER ||--o{ VEHICLE : owns
+    USER ||--o{ BOOKING : makes
+    USER ||--o{ REVIEW : writes
+    VEHICLE ||--o{ BOOKING : has
+    VEHICLE ||--o{ REVIEW : receives
+    BOOKING ||--|| PAYMENT : generates
+
+    USER {
+        string id PK
+        string name
+        string email
+        string password
+        string role "Admin, Owner, Renter"
+    }
+    VEHICLE {
+        string id PK
+        string ownerId FK
+        string type "Car, Bike, Scooter"
+        string make
+        string model
+        float pricePerHour
+        boolean isAvailable
+    }
+    BOOKING {
+        string id PK
+        string userId FK
+        string vehicleId FK
+        datetime startTime
+        datetime endTime
+        string status "Pending, Confirmed, Completed, Cancelled"
+        string bookingType "SelfDrive, WithDriver"
+    }
+    PAYMENT {
+        string id PK
+        string bookingId FK
+        float amount
+        string status "Success, Failed, Pending"
+        string paymentMethod
+    }
+    REVIEW {
+        string id PK
+        string userId FK
+        string vehicleId FK
+        int rating
+        string comment
+    }
+```
+
+### 3. Vehicle Booking Flow
+This sequence diagram shows the steps involved when a renter searches for and books a vehicle.
+
+```mermaid
+sequenceDiagram
+    actor Renter
+    participant Client as Frontend (React)
+    participant Server as Backend (Node)
+    participant DB as Database (Neon)
+    participant Payment as Razorpay
+    actor Owner
+
+    Renter->>Client: Search Vehicles (Location, Dates)
+    Client->>Server: GET /api/vehicles/search
+    Server->>DB: Query Available Vehicles
+    DB-->>Server: Vehicle List
+    Server-->>Client: Vehicle List
+    Client-->>Renter: Display Vehicles
+    
+    Renter->>Client: Select Vehicle & Book
+    Client->>Server: POST /api/bookings
+    Server->>DB: Create Booking (Pending)
+    Server-->>Client: Return Payment Intent
+    
+    Client->>Payment: Process Payment
+    Payment-->>Client: Payment Success
+    
+    Client->>Server: POST /api/payments/verify
+    Server->>DB: Update Booking Status (Confirmed)
+    Server->>Client: Booking Confirmed
+    Server->>Owner: Notification (New Booking)
+    Client-->>Renter: Show Booking Success Ticket
+```
+
+### 4. Jenkins CI/CD Pipeline
+An overview of the continuous integration pipeline ensuring code quality on every push to the `main` branch.
+
+```mermaid
+flowchart LR
+    Dev([Developer]) -->|Push to main| GitHub[GitHub Repository]
+    GitHub -->|Webhook| Jenkins[Jenkins CI]
+    
+    subgraph Jenkins Pipeline
+        Checkout[Clone Repo] --> Install[npm ci]
+        Install --> Generate[Prisma Generate]
+        Generate --> Lint[Linting]
+        Lint --> Test[Run Tests]
+        Test --> BuildFrontend[Build Vite Frontend]
+        Test --> BuildBackend[Build Node Backend]
+        BuildFrontend --> Archive[Archive Artifacts]
+        BuildBackend --> Archive
+    end
+    
+    Jenkins -->|Status Notification| GitHub
+```
+
+---
+
 ## 📁 Project Structure
 
 ```text
