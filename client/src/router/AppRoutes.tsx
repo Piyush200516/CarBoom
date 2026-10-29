@@ -24,6 +24,9 @@ import PrivacyPage from "../pages/Privacy";
 import TermsPage from "../pages/Terms";
 import NotFound from "../pages/NotFound/NotFound";
 import ProfilePage from "../pages/Profile/ProfilePage";
+import Checkout from "../pages/Checkout/Checkout";
+import Payment from "../pages/Payment/Payment";
+import BookingConfirmation from "../pages/BookingConfirmation/BookingConfirmation";
 import { useAuth } from "../store/AuthContext";
 
 /**
@@ -54,6 +57,10 @@ const AppRoutes = () => {
       <Route path="/signup" element={<GuestRoute><Signup /></GuestRoute>} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      {/* Booking flow pages – from legacy frontend folder */}
+      <Route path="/checkout" element={<Checkout />} />
+      <Route path="/payment" element={<Payment />} />
+      <Route path="/booking-confirmation" element={<BookingConfirmation />} />
 
       {/* Authenticated Dashboard Pages — DashboardLayout handles auth guard */}
         {/* Profile Page */}
