@@ -114,7 +114,7 @@ export const ProfilePage: React.FC = () => {
           address: data.address,
           accountType: data.role?.toUpperCase() === "OWNER" ? "Owner" : "Renter",
         }));
-      } catch (err) {
+      } catch (_err) {
         toast("Failed to load profile", { type: "error" });
       } finally {
         setLoading(false);
@@ -137,22 +137,24 @@ export const ProfilePage: React.FC = () => {
       });
       toast("Profile updated successfully", { type: "success" });
       setEditMode(false);
-    } catch (e) {
+    } catch (_e) {
       toast("Failed to save profile", { type: "error" });
     }
   };
 
   const handleCancel = () => {
     if (user) {
+      type ExtendedUser = typeof user & { phone?: string; gender?: "Male" | "Female" | "Other"; dob?: string; city?: string; state?: string; address?: string };
+      const u = user as ExtendedUser;
       reset({
         fullName: user.name,
         email: user.email,
-        mobile: (user as any).phone,
-        gender: (user as any).gender,
-        dob: (user as any).dob?.split("T")[0] || "",
-        city: (user as any).city,
-        state: (user as any).state,
-        address: (user as any).address,
+        mobile: u.phone,
+        gender: u.gender,
+        dob: u.dob?.split("T")[0] || "",
+        city: u.city,
+        state: u.state,
+        address: u.address,
         accountType: user.role?.toUpperCase() === "OWNER" ? "Owner" : "Renter",
       });
     }
@@ -168,7 +170,7 @@ export const ProfilePage: React.FC = () => {
       const resp = await profileService.uploadPhoto(formData);
       setProfilePic(resp.avatarUrl);
       toast("Profile picture updated", { type: "success" });
-    } catch (err) {
+    } catch (_err) {
       toast("Failed to upload picture", { type: "error" });
     }
   };

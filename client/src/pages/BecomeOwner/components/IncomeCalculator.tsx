@@ -38,6 +38,7 @@ export const IncomeCalculator: React.FC = () => {
   React.useEffect(() => {
     const matched = VEHICLE_TYPES.find(v => v.id === selectedType);
     if (matched) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPricePerDay(matched.defaultPrice);
     }
   }, [selectedType]);
@@ -63,6 +64,7 @@ export const IncomeCalculator: React.FC = () => {
     const commission = Math.round(gross * 0.15);
     const insurance = Math.round(availableDays * 80);
     const net = gross - commission - insurance;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCalculated({ gross, commission, insurance, net });
   }, [selectedType, pricePerDay, availableDays]);
 

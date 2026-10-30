@@ -11,7 +11,7 @@ interface TimelineTier {
   status: string;
   badgeVariant: "success" | "warning" | "danger";
   description: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ size?: number; strokeWidth?: number }>;
   colorClass: string;
   details: string[];
 }

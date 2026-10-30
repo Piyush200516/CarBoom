@@ -22,7 +22,7 @@ interface VehicleFilterProps {
 }
 
 export const VehicleFilter: React.FC<VehicleFilterProps> = ({ filters, setFilters, onReset, brands }) => {
-  const updateFilter = (key: keyof FilterState, value: any) => {
+  const updateFilter = (key: keyof FilterState, value: FilterState[typeof key]) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 

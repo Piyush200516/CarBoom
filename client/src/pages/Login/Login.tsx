@@ -44,9 +44,10 @@ export const Login = () => {
         });
         navigate("/dashboard");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
       toast("Login Failed", {
-        description: error.response?.data?.message || "Invalid email or password",
+        description: message || "Invalid email or password",
         type: "error",
       });
     }

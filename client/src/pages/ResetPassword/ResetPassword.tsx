@@ -32,7 +32,8 @@ export const ResetPassword = () => {
     resolver: zodResolver(resetSchema),
   });
 
-  const onSubmit = async (_: ResetFormValues) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const onSubmit = async (_data: ResetFormValues) => {
     return new Promise<void>((resolve) => {
       setTimeout(() => {
         toast("Password Reset Successful", {

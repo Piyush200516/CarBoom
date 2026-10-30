@@ -13,8 +13,10 @@ const Home = () => {
 
     useEffect(() => {
         // Handle scroll request redirected from layout navigation
-        if (location.state && (location.state as any).scrollTo) {
-            const id = (location.state as any).scrollTo;
+        type ScrollState = { scrollTo?: string };
+        const state = location.state as ScrollState | null;
+        if (state?.scrollTo) {
+            const id = state.scrollTo;
             const element = document.getElementById(id);
             if (element) {
                 setTimeout(() => {

@@ -52,9 +52,10 @@ export const Signup = () => {
         type: "success",
       });
       navigate("/login");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
       toast("Signup Failed", {
-        description: error.response?.data?.message || "An error occurred during signup",
+        description: message || "An error occurred during signup",
         type: "error",
       });
     }

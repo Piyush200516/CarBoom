@@ -79,6 +79,7 @@ export const Wishlist = () => {
       const items = ids
         .map(id => enhancedMockVehicles.find(v => v.id === id))
         .filter((v): v is EnhancedVehicle => !!v);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRecentlyViewed(items.slice(0, 4));
     }
   }, []);

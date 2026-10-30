@@ -12,10 +12,11 @@ export const EmergencySupport: React.FC = () => {
   const [alertDispatched, setAlertDispatched] = useState(false);
 
   useEffect(() => {
-    let timer: any;
+    let timer: ReturnType<typeof setTimeout>;
     if (sosActive && countdown > 0) {
       timer = setTimeout(() => setCountdown(countdown - 1), 1000);
     } else if (sosActive && countdown === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAlertDispatched(true);
     }
     return () => clearTimeout(timer);

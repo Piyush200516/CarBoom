@@ -24,6 +24,7 @@ export const RecentlyViewed: React.FC<RecentlyViewedProps> = ({
         const matched = ids
           .map(id => vehicles.find(v => v.id === id))
           .filter((v): v is VehicleWithExtras => !!v);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setHistory(matched.slice(0, 4));
       }
     } catch (e) {

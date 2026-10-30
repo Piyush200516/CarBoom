@@ -39,6 +39,10 @@ const Payment: React.FC = () => {
   const [cvv, setCvv] = useState("");
   const [cardErrors, setCardErrors] = useState<string[]>([]);
   const [paying, setPaying] = useState(false);
+  // Generate a stable booking ID once on mount (not on every render)
+  const [bookingId] = useState(() =>
+    Math.random().toString(36).substr(2, 9).toUpperCase()
+  );
 
   // Retrieve total from localStorage (set by Checkout page)
   const totalPayable = Number(localStorage.getItem("CheckoutPaymentTotal") ?? 0);
@@ -138,7 +142,7 @@ const Payment: React.FC = () => {
               <div className="booking-id">
                 Booking ID:{" "}
                 <span id="bk_id">
-                  {Math.random().toString(36).substr(2, 9).toUpperCase()}
+                  {bookingId}
                 </span>
               </div>
             </div>
