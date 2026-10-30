@@ -6,6 +6,7 @@ import { Toaster, toast as sonnerToast } from "sonner";
 export type ToastType = "success" | "error" | "info" | "warning";
 
 // Central toast utility mirroring previous API
+// eslint-disable-next-line react-refresh/only-export-components
 export const toast = {
   success: (title: string, description?: string) =>
     sonnerToast.success(title, { description, duration: 4000, className: "bg-[#111827] text-white" }),
@@ -31,6 +32,7 @@ export const GlobalToastProvider: React.FC<{ children: React.ReactNode }> = ({ c
 );
 
 // Context hook kept for backward compatibility – wraps the new toast utility
+// eslint-disable-next-line react-refresh/only-export-components
 export const useToast = () => {
   // No context needed; we expose a simple hook that uses the toast utility directly
   return {

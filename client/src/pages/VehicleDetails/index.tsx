@@ -29,24 +29,9 @@ export const VehicleDetails = () => {
   const [pickupLoc, setPickupLoc] = useState("Main Hub (Free)");
   const [isWishlisted, setIsWishlisted] = useState(false);
 
-  if (!vehicle) {
-    return (
-      <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 p-6">
-        <AlertCircle size={48} className="text-red-500 mb-4" />
-        <h2 className="text-xl font-bold text-gray-900">Vehicle Not Found</h2>
-        <p className="text-sm text-gray-500 font-semibold mt-1">
-          The vehicle you are looking for does not exist or has been unlisted.
-        </p>
-        <Link to="/browse" className="mt-6">
-          <Button variant="primary">Back to Browse</Button>
-        </Link>
-      </div>
-    );
-  }
-
-  // Calculate pricing
+  // Calculate pricing - this hook must be called before any conditional returns
   const pricingSummary = useMemo(() => {
-    if (!pickupDate || !returnDate) return null;
+    if (!vehicle || !pickupDate || !returnDate) return null;
     
     const start = new Date(pickupDate);
     const end = new Date(returnDate);
@@ -57,9 +42,9 @@ export const VehicleDetails = () => {
     const hours = Math.ceil(diffMs / (1000 * 60 * 60));
     const days = Math.ceil(hours / 24);
 
-    let durationLabel = "";
-    let rate = 0;
-    let total = 0;
+    let durationLabel: string;
+    let rate: number;
+    let total: number;
 
     // Standard business rule: If less than 24 hours, charge hourly. Else, charge daily.
     if (hours < 24) {
@@ -86,6 +71,21 @@ export const VehicleDetails = () => {
       grandTotal,
     };
   }, [pickupDate, returnDate, vehicle]);
+
+  if (!vehicle) {
+    return (
+      <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 p-6">
+        <AlertCircle size={48} className="text-red-500 mb-4" />
+        <h2 className="text-xl font-bold text-gray-900">Vehicle Not Found</h2>
+        <p className="text-sm text-gray-500 font-semibold mt-1">
+          The vehicle you are looking for does not exist or has been unlisted.
+        </p>
+        <Link to="/browse" className="mt-6">
+          <Button variant="primary">Back to Browse</Button>
+        </Link>
+      </div>
+    );
+  }
 
   const handleBooking = (e: FormEvent) => {
     e.preventDefault();

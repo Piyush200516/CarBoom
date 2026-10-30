@@ -30,6 +30,7 @@ const SESSION_HINT_KEY = "carboom_session";
 // import AuthContext (circular dependency). We use a simple event bus instead.
 const AUTH_LOGOUT_EVENT = "carboom:auth:logout";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const emitAuthLogout = () =>
   window.dispatchEvent(new CustomEvent(AUTH_LOGOUT_EVENT));
 
@@ -97,7 +98,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     didCheck.current = true;
 
     if (hasSessionHint) {
-      checkAuth();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      void checkAuth();
     }
     // If no session hint → user is a guest, isLoading stays false.
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -155,6 +157,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

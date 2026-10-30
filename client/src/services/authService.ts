@@ -10,13 +10,26 @@ export interface User {
   createdAt: string;
 }
 
+interface RegisterPayload {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  role?: string;
+}
+
+interface LoginPayload {
+  email: string;
+  password: string;
+}
+
 export const authService = {
-  async register(data: any) {
+  async register(data: RegisterPayload) {
     const response = await api.post("/auth/register", data);
     return response.data;
   },
 
-  async login(data: any) {
+  async login(data: LoginPayload) {
     const response = await api.post("/auth/login", data);
     return response.data;
   },
