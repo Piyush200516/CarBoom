@@ -1,19 +1,22 @@
 // src/pages/VehicleDetails/index.tsx
 
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useMemo, useState, FormEvent } from "react";
 
-import { Fuel, Settings, Users, Fuel as MileageIcon, Star, Check, ArrowRight, MessageSquare, AlertCircle, Heart, MapPin, Calendar } from "lucide-react";
+import { Fuel, Settings, Users, Fuel as MileageIcon, Star, Check, ArrowRight, MessageSquare, AlertCircle, Heart, MapPin, Calendar, Lock } from "lucide-react";
 import { mockVehicles } from "../../data/mockData";
 import { RatingStars } from "../../components/common/RatingStars";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { useToast } from "../../components/ui/Toast";
+import { useAuth } from "../../store/AuthContext";
 
 export const VehicleDetails = () => {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated } = useAuth();
 
   // Find vehicle by ID
   const vehicle = useMemo(() => {
@@ -98,13 +101,50 @@ export const VehicleDetails = () => {
       return;
     }
 
-    toast("Booking Successful", {
-      description: `Your rental for ${vehicle.name} has been confirmed. Redirecting to payment...`,
-      type: "success",
-    });
-    setTimeout(() => {
-      navigate("/");
-    }, 2000);
+    // 🔒 Login required before booking
+    if (!isAuthenticated) {
+      toast("Login Required", {
+        description: "Please login to book this vehicle.",
+        type: "info",
+      });
+      // Store booking intent so we can restore after login
+      localStorage.setItem(
+        "bookingIntent",
+        JSON.stringify({
+          vehicleId: vehicle!.id,
+          vehicleName: vehicle!.name,
+          pickupDate,
+          returnDate,
+          pickupLoc,
+          grandTotal: pricingSummary?.grandTotal ?? 0,
+        })
+      );
+      navigate("/login", { state: { returnTo: location.pathname } });
+      return;
+    }
+
+    // ✅ User is logged in — store booking info and go to Checkout
+    localStorage.setItem(
+      "bookingIntent",
+      JSON.stringify({
+        vehicleId: vehicle!.id,
+        vehicleName: vehicle!.name,
+        image: vehicle!.images[0] ?? vehicle!.image,
+        seats: vehicle!.seats,
+        pickupDate,
+        returnDate,
+        pickupLoc,
+        baseTotal: pricingSummary?.baseTotal ?? 0,
+        cgst: pricingSummary?.cgst ?? 0,
+        sgst: pricingSummary?.sgst ?? 0,
+        refundDeposit: pricingSummary?.refundDeposit ?? 0,
+        grandTotal: pricingSummary?.grandTotal ?? 0,
+        durationLabel: pricingSummary?.durationLabel ?? "",
+      })
+    );
+    localStorage.setItem("CheckoutPaymentTotal", String(pricingSummary?.grandTotal ?? 0));
+
+    navigate("/checkout");
   };
 
   const toggleWishlist = () => {
@@ -341,8 +381,17 @@ export const VehicleDetails = () => {
                   type="submit"
                   className="w-full flex items-center justify-center gap-2 font-bold uppercase tracking-wider text-xs py-3 rounded-xl shadow-yellow-glow-hover cursor-pointer mt-4"
                 >
-                  Book Now <ArrowRight size={14} />
+                  {isAuthenticated ? (
+                    <><ArrowRight size={14} /> Book Now — Proceed to Checkout</>
+                  ) : (
+                    <><Lock size={14} /> Login to Book</>
+                  )}
                 </Button>
+                {!isAuthenticated && (
+                  <p className="text-center text-xs text-gray-400 mt-2">
+                    <span className="font-semibold text-yellow-600">Login required</span> to complete booking
+                  </p>
+                )}
               </form>
             </Card>
           </div>
