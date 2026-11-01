@@ -4,6 +4,7 @@ import { vehicleRepository } from "../repositories/vehicle.repository.js";
 import { ApiError } from "../utils/apiError.js";
 import { prisma } from "../config/db.js";
 import { BookingStatus, BookingDuration, PaymentStatus } from "@prisma/client";
+import { emitNotification, emitBookingUpdate } from "../lib/socketManager.js";
 
 interface CreateBookingInput {
   userId: string;
@@ -113,12 +114,28 @@ export class BookingService {
       });
     }
 
-    // Send notification to vehicle owner
-    await notificationRepository.createNotification({
+    // Send notification to vehicle owner (DB + real-time)
+    const ownerNotif = await notificationRepository.createNotification({
       userId: vehicle.ownerId,
       type: "BOOKING_REQUEST",
       message: `New booking request for your vehicle "${vehicle.name}" from ${booking.user.name}.`,
       vehicleId,
+    });
+
+    // 🔌 Real-time: push to owner's socket room
+    emitNotification(vehicle.ownerId, {
+      id: ownerNotif.id,
+      type: ownerNotif.type,
+      message: ownerNotif.message,
+      vehicleId: ownerNotif.vehicleId ?? undefined,
+      createdAt: ownerNotif.createdAt,
+      isRead: ownerNotif.isRead,
+    });
+    emitBookingUpdate([vehicle.ownerId], {
+      action: "new_booking_request",
+      bookingId: booking.id,
+      vehicleId,
+      renterName: booking.user.name,
     });
 
     return booking;
@@ -163,7 +180,7 @@ export class BookingService {
 
     const updated = await bookingRepository.updateBookingStatus(id, status);
 
-    // Notify renter
+    // Notify renter (DB + real-time)
     const messages: Record<string, string> = {
       CONFIRMED: `Your booking for "${booking.vehicle.name}" has been confirmed by the host!`,
       REJECTED: `Your booking request for "${booking.vehicle.name}" was declined by the host.`,
@@ -172,11 +189,27 @@ export class BookingService {
     };
     const msg = messages[status];
     if (msg) {
-      await notificationRepository.createNotification({
+      const renterNotif = await notificationRepository.createNotification({
         userId: booking.userId,
         type: `BOOKING_${status}`,
         message: msg,
         vehicleId: booking.vehicleId,
+      });
+
+      // 🔌 Real-time: push status update to renter immediately
+      emitNotification(booking.userId, {
+        id: renterNotif.id,
+        type: renterNotif.type,
+        message: renterNotif.message,
+        vehicleId: renterNotif.vehicleId ?? undefined,
+        createdAt: renterNotif.createdAt,
+        isRead: renterNotif.isRead,
+      });
+      emitBookingUpdate([booking.userId, booking.vehicle.owner.id], {
+        action: "booking_status_changed",
+        bookingId: id,
+        status,
+        vehicleName: booking.vehicle.name,
       });
     }
 
@@ -218,12 +251,28 @@ export class BookingService {
       });
     }
 
-    // Notify owner
-    await notificationRepository.createNotification({
+    // Notify owner (DB + real-time)
+    const cancelNotif = await notificationRepository.createNotification({
       userId: booking.vehicle.owner.id,
       type: "BOOKING_CANCELLED",
       message: `Booking for "${booking.vehicle.name}" was cancelled.`,
       vehicleId: booking.vehicleId,
+    });
+
+    // 🔌 Real-time: push cancellation to both parties
+    emitNotification(booking.vehicle.owner.id, {
+      id: cancelNotif.id,
+      type: cancelNotif.type,
+      message: cancelNotif.message,
+      vehicleId: cancelNotif.vehicleId ?? undefined,
+      createdAt: cancelNotif.createdAt,
+      isRead: cancelNotif.isRead,
+    });
+    emitBookingUpdate([booking.userId, booking.vehicle.owner.id], {
+      action: "booking_cancelled",
+      bookingId: id,
+      refundPercent,
+      vehicleName: booking.vehicle.name,
     });
 
     return { booking: updated, refundPercent };

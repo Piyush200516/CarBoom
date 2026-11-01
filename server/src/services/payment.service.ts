@@ -3,6 +3,8 @@ import { ApiError } from "../utils/apiError.js";
 import { PaymentMethod, PaymentStatus } from "@prisma/client";
 import crypto from "crypto";
 import { config } from "../config/config.js";
+import { emitPaymentConfirmed, emitNotification } from "../lib/socketManager.js";
+import { notificationRepository } from "../repositories/notification.repository.js";
 
 interface CreateOrderInput {
   bookingId: string;
@@ -97,6 +99,36 @@ export class PaymentService {
         },
       }),
     ]);
+
+    // Get booking to know who the renter is
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      select: { userId: true, vehicle: { select: { name: true } } },
+    });
+
+    if (booking) {
+      // DB notification
+      const payNotif = await notificationRepository.createNotification({
+        userId: booking.userId,
+        type: "PAYMENT_SUCCESS",
+        message: `Payment of ₹${payment.amount.toLocaleString("en-IN")} confirmed for "${booking.vehicle.name}". Your booking is confirmed!`,
+      });
+
+      // 🔌 Real-time: push payment confirmation instantly
+      emitPaymentConfirmed(booking.userId, {
+        bookingId,
+        amount: payment.amount,
+        razorpayPaymentId,
+        vehicleName: booking.vehicle.name,
+      });
+      emitNotification(booking.userId, {
+        id: payNotif.id,
+        type: payNotif.type,
+        message: payNotif.message,
+        createdAt: payNotif.createdAt,
+        isRead: payNotif.isRead,
+      });
+    }
 
     return updatedPayment;
   }
