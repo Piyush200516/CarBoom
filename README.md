@@ -6,9 +6,11 @@
 
 [![GitHub Repo](https://img.shields.io/badge/GitHub-CarBoom-181717?logo=github)](https://github.com/Piyush200516/CarBoom)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js)](https://nodejs.org)
+[![Node.js](https://img.shields.io/badge/Node.js-Express%205-339933?logo=node.js)](https://nodejs.org)
 [![React](https://img.shields.io/badge/Frontend-React%2019-61DAFB?logo=react)](https://react.dev)
 [![PostgreSQL](https://img.shields.io/badge/DB-Neon%20PostgreSQL-336791?logo=postgresql)](https://neon.tech)
+[![Socket.IO](https://img.shields.io/badge/Realtime-Socket.IO-010101?logo=socket.io)](https://socket.io)
+[![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?logo=typescript)](https://www.typescriptlang.org)
 
 </div>
 
@@ -18,7 +20,7 @@
 
 CarBoom is a next-generation **peer-to-peer vehicle rental platform** where:
 
-- 🚗 **Renters** can search, browse, and instantly book vehicles.
+- 🚗 **Renters** can search, browse, and instantly book vehicles with a protected, guided checkout flow.
 - 🏠 **Owners** can list their vehicles, manage availability, and earn passive income.
 - 🛡️ **Admins** can verify owners, approve vehicles, and manage the entire ecosystem.
 
@@ -26,20 +28,21 @@ CarBoom is a next-generation **peer-to-peer vehicle rental platform** where:
 
 | Feature | Description |
 |---|---|
-| 🤖 AI Recommendations | Smart vehicle suggestions based on preferences |
-| 📍 Location Services | Ola Maps integration for pickup & drop |
-| 🔐 Auth & RBAC | JWT + Refresh Token auth with role-based access |
-| 💳 Payments | Razorpay with coupon & discount support |
-| ⭐ Reviews & Ratings | User reviews per vehicle |
-| ❤️ Wishlist | Save favourite vehicles |
-| 📅 Real-Time Booking | Instant availability checks |
+| 🔌 Real-Time Notifications | Live Socket.IO events for bookings, payments & status changes |
+| 🔒 Protected Booking Flow | Login required to book — with seamless post-login redirect |
+| 💳 Payments | Razorpay integration with coupon & discount support |
+| 🔐 Auth & RBAC | JWT + Refresh Token auth with role-based access control |
+| 🔔 Notification Bell | Real-time bell with unread badge, dropdown panel & DB sync |
+| ⭐ Reviews & Ratings | User reviews per vehicle (after completed booking only) |
 | 📊 Owner Dashboard | Revenue analytics & booking management |
-| 🔔 Notifications | Real-time notification system |
+| 📍 Location Services | City-based vehicle search & delivery options |
+| 🤖 AI Recommendations | Smart vehicle suggestions based on preferences *(planned)* |
+| ❤️ Wishlist | Save favourite vehicles |
 | 🔑 OAuth | Google & GitHub social login |
 | 📧 Email | Nodemailer for transactional emails |
-| 🛡️ Security | Helmet, Rate Limiting, Audit Logs |
+| 🛡️ Security | Helmet, Rate Limiting, CORS, Audit Logs |
 | 📄 API Docs | Swagger / OpenAPI documentation |
-| 📱 Responsive UI | Fully responsive with dark mode support |
+| 📱 Responsive UI | Fully responsive with dark mode & glassmorphism design |
 
 ---
 
@@ -53,16 +56,15 @@ CarBoom is a next-generation **peer-to-peer vehicle rental platform** where:
 | Vite 8 | Build tool & dev server |
 | Tailwind CSS v4 | Utility-first styling |
 | Shadcn UI + Base UI | Pre-built component library |
-| React Router DOM v7 | Client-side routing |
+| React Router DOM v7 | Client-side routing with `ProtectedRoute` guards |
 | Redux Toolkit | Global state management |
 | TanStack Query v5 | Server state & data fetching |
 | React Hook Form + Zod | Form handling & validation |
 | Framer Motion | Animations & transitions |
-| Axios | HTTP client |
+| Axios | HTTP client with token-refresh interceptor |
+| Socket.IO Client | Real-time WebSocket communication |
 | Lucide React | Icon library |
-| Sonner / React Hot Toast | Toast notifications |
-| next-themes | Dark / Light mode |
-| Socket.IO Client | Real-time communication |
+| Sonner | Toast notifications |
 | Dayjs | Date utilities |
 
 ### Backend (`/server`)
@@ -73,19 +75,18 @@ CarBoom is a next-generation **peer-to-peer vehicle rental platform** where:
 | TypeScript | Type-safe backend |
 | Prisma ORM | Database access layer |
 | Neon PostgreSQL | Serverless PostgreSQL database |
+| Socket.IO Server | Real-time WebSocket events (user rooms) |
 | Redis | Caching & session store |
-| Socket.IO | Real-time WebSocket server |
 | JWT (Access + Refresh) | Authentication tokens |
 | Passport.js | Google & GitHub OAuth |
 | Cloudinary | Image & document storage |
-| Razorpay | Payment gateway |
+| Razorpay | Payment gateway (with HMAC verification) |
 | Nodemailer | Transactional email |
 | Multer | File upload handling |
-| Winston | Structured logging |
-| Morgan | HTTP request logging |
+| Winston + Morgan | Structured logging |
 | Helmet | HTTP security headers |
 | express-rate-limit | Rate limiting |
-| Swagger | API documentation (`/api-docs`) |
+| Swagger / OpenAPI | API documentation (`/api-docs`) |
 | Zod | Request validation |
 
 ---
@@ -103,17 +104,17 @@ graph TD
     %% Frontend
     subgraph Frontend [React 19 + Vite — Vercel]
         UI[UI Components\nShadcn / Tailwind]
-        Redux[Redux Toolkit]
-        Query[TanStack Query]
-        SocketC[Socket.IO Client]
+        SocketC[Socket.IO Client\nSocketContext]
+        AuthCtx[AuthContext\nJWT Session]
+        Routes[ProtectedRoute\nGuestRoute Guards]
     end
 
     %% Backend
     subgraph Backend [Node.js + Express 5 — Render]
         API[REST API /api/v1]
         Auth[JWT + Passport OAuth]
-        SocketS[Socket.IO Server]
-        Swagger[Swagger Docs]
+        SocketS[Socket.IO Server\nUser Rooms]
+        SocketMgr[socketManager.ts\nEmit Helpers]
         Prisma[Prisma ORM]
     end
 
@@ -122,28 +123,85 @@ graph TD
     Cache[(Redis Cache)]
     Cloudinary[Cloudinary\nImage Storage]
     Razorpay[Razorpay\nPayments]
-    OlaMaps[Ola Maps\nLocation]
     Email[Nodemailer\nEmail Service]
 
     %% Connections
     User <-->|HTTPS| Frontend
     Admin <-->|HTTPS| Frontend
     Frontend <-->|REST /api/v1| API
-    Frontend <-->|WebSocket| SocketS
-    Frontend <-->|SDK| OlaMaps
-
+    Frontend <-->|WebSocket ws://| SocketS
     API <--> Auth
     API <--> Prisma
     API <--> Cache
-    SocketS <--> API
-
+    SocketS <--> SocketMgr
+    SocketMgr <--> API
     Prisma <--> DB
     API --> Cloudinary
     API --> Razorpay
     API --> Email
 ```
 
-### 2. Database Entity Relationship (ER) Diagram
+### 2. Real-Time Architecture (Socket.IO)
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Client as React Client
+    participant SocketCtx as SocketContext
+    participant SocketIO as Socket.IO Server
+    participant Service as Booking/Payment Service
+    participant DB as PostgreSQL
+
+    User->>Client: Login success
+    Client->>SocketCtx: Connect socket
+    SocketCtx->>SocketIO: connect()
+    SocketIO-->>SocketCtx: connected
+    SocketCtx->>SocketIO: emit("join", userId)
+    SocketIO-->>SocketCtx: joined user room
+
+    Note over User,DB: --- Booking Created ---
+    User->>Client: Book vehicle
+    Client->>Service: POST /api/v1/bookings
+    Service->>DB: Create booking (PENDING)
+    Service->>DB: Create notification
+    Service->>SocketIO: emitNotification(ownerId, ...)
+    SocketIO-->>Client: notification:new event
+    Client-->>User: 🔔 Toast + badge update
+
+    Note over User,DB: --- Payment Verified ---
+    Client->>Service: POST /api/v1/payments/verify
+    Service->>DB: Update booking → CONFIRMED
+    Service->>SocketIO: emitPaymentConfirmed(userId)
+    SocketIO-->>Client: payment:confirmed event
+    Client-->>User: 💳 "Payment Confirmed!" toast → redirect
+```
+
+### 3. Protected Booking Flow
+
+```mermaid
+flowchart TD
+    A([User visits Vehicle Details]) --> B{Logged in?}
+    B -- No --> C[Show 'Login to Book' button]
+    C --> D[Store bookingIntent in localStorage]
+    D --> E[Redirect to /login\nwith returnTo state]
+    E --> F[User logs in]
+    F --> G{bookingIntent exists?}
+    G -- Yes --> H[Redirect to /checkout]
+    G -- No --> I[Redirect to /dashboard]
+    B -- Yes --> J[Show 'Book Now' button]
+    J --> K[Store bookingIntent + pricing\nin localStorage]
+    K --> H[/checkout — ProtectedRoute]
+    H --> L{Authenticated?}
+    L -- No --> E
+    L -- Yes --> M[Show real pricing breakdown]
+    M --> N[Proceed to /payment — ProtectedRoute]
+    N --> O{Card / COD / Netbanking}
+    O --> P[POST /payments/verify]
+    P --> Q[🔌 Socket: payment:confirmed]
+    Q --> R[/booking-confirmation]
+```
+
+### 4. Database Entity Relationship (ER) Diagram
 
 ```mermaid
 erDiagram
@@ -182,7 +240,6 @@ erDiagram
         string ownerId FK
         string type "CAR | BIKE | SCOOTER | BICYCLE"
         string fuelType "PETROL | DIESEL | CNG | ELECTRIC"
-        string transmission "MANUAL | AUTOMATIC"
         float pricePerHour
         float pricePerDay
         float pricePerWeek
@@ -198,6 +255,7 @@ erDiagram
         string duration "HOURLY | DAILY | WEEKLY"
         string status "PENDING | CONFIRMED | ACTIVE | COMPLETED | CANCELLED | REJECTED"
         float totalAmount
+        float securityDeposit
     }
     PAYMENT {
         uuid id PK
@@ -207,41 +265,17 @@ erDiagram
         string status "PENDING | SUCCESS | FAILED | REFUNDED"
         string razorpayId
     }
+    NOTIFICATION {
+        uuid id PK
+        string userId FK
+        string type
+        string message
+        boolean isRead
+        datetime createdAt
+    }
 ```
 
-### 3. Vehicle Booking Flow
-
-```mermaid
-sequenceDiagram
-    actor Renter
-    participant Client as React Frontend
-    participant Server as Express Backend
-    participant DB as Neon PostgreSQL
-    participant Pay as Razorpay
-
-    Renter->>Client: Search vehicles (location, dates, type)
-    Client->>Server: GET /api/v1/vehicles?city=...&type=...
-    Server->>DB: Query approved + available vehicles
-    DB-->>Server: Vehicle list
-    Server-->>Client: Paginated vehicle list
-    Client-->>Renter: Display results with filters
-
-    Renter->>Client: Select vehicle & confirm booking
-    Client->>Server: POST /api/v1/bookings
-    Server->>DB: Create Booking (PENDING)
-    Server-->>Client: Booking ID + payment order
-
-    Client->>Pay: Initiate Razorpay payment
-    Pay-->>Client: Payment success callback
-
-    Client->>Server: POST /api/v1/payments/verify
-    Server->>DB: Update Booking → CONFIRMED
-    Server->>DB: Create Payment record
-    Server-->>Client: Booking confirmed
-    Client-->>Renter: Show booking confirmation ticket
-```
-
-### 4. Jenkins CI/CD Pipeline
+### 5. Jenkins CI/CD Pipeline
 
 ```mermaid
 flowchart LR
@@ -271,72 +305,191 @@ flowchart LR
 CarBoom/
 ├── client/                         # React 19 + Vite Frontend
 │   ├── src/
-│   │   ├── components/             # Reusable UI components
-│   │   │   └── ui/                 # Shadcn-based component library
-│   │   ├── pages/                  # Application pages
+│   │   ├── components/
+│   │   │   ├── ui/
+│   │   │   │   ├── NotificationBell.tsx   # 🔌 Real-time notification bell
+│   │   │   │   ├── NotificationBell.css
+│   │   │   │   ├── Toast.tsx
+│   │   │   │   ├── Button.tsx
+│   │   │   │   ├── Card.tsx
+│   │   │   │   ├── Modal.tsx
+│   │   │   │   └── ...
+│   │   │   ├── layout/
+│   │   │   │   ├── DashboardNavbar.tsx    # NotificationBell integrated
+│   │   │   │   ├── Navbar.tsx
+│   │   │   │   └── Footer.tsx
+│   │   │   ├── common/
+│   │   │   ├── auth/
+│   │   │   ├── dashboard/
+│   │   │   └── home/
+│   │   ├── pages/
 │   │   │   ├── Home/
 │   │   │   ├── BrowseVehicles/
-│   │   │   ├── VehicleDetails/
-│   │   │   ├── Checkout/
-│   │   │   ├── Payment/
-│   │   │   ├── BookingConfirmation/
+│   │   │   ├── VehicleDetails/            # Auth guard + bookingIntent save
+│   │   │   ├── Checkout/                  # ProtectedRoute + localStorage pricing
+│   │   │   ├── Payment/                   # ProtectedRoute + real-time confirm
+│   │   │   ├── BookingConfirmation/       # ProtectedRoute
 │   │   │   ├── Dashboard/
+│   │   │   │   ├── DashboardHome.tsx
+│   │   │   │   ├── MyBookings.tsx
+│   │   │   │   └── Wishlist.tsx
 │   │   │   ├── Profile/
+│   │   │   ├── Login/                     # returnTo redirect after login
+│   │   │   ├── Signup/
+│   │   │   ├── ForgotPassword/
+│   │   │   ├── ResetPassword/
 │   │   │   ├── BecomeOwner/
-│   │   │   ├── Login/ & Signup/
-│   │   │   ├── ForgotPassword/ & ResetPassword/
 │   │   │   ├── HowItWorks/
 │   │   │   ├── AboutUs/ & Contact/
 │   │   │   ├── HelpCenter/
 │   │   │   ├── Safety/ & Privacy/ & Terms/
 │   │   │   ├── CancellationPolicy/
 │   │   │   └── NotFound/
-│   │   ├── services/               # Axios API service layer
-│   │   ├── store/                  # Redux Toolkit slices
-│   │   ├── router/                 # React Router configuration
-│   │   ├── layouts/                # Page layout wrappers
-│   │   ├── constants/              # App-wide constants
-│   │   ├── utils/                  # Helper utilities
-│   │   └── data/                   # Static/mock data
-│   ├── public/
+│   │   ├── services/
+│   │   │   ├── authService.ts
+│   │   │   ├── bookingService.ts          # Full booking API wrapper
+│   │   │   ├── paymentService.ts          # Payment API wrapper
+│   │   │   ├── reviewService.ts           # Review API wrapper
+│   │   │   └── profileService.ts
+│   │   ├── store/
+│   │   │   ├── AuthContext.tsx            # JWT session + forced logout
+│   │   │   └── SocketContext.tsx          # 🔌 Socket.IO client context
+│   │   ├── router/
+│   │   │   └── AppRoutes.tsx              # GuestRoute + ProtectedRoute guards
+│   │   ├── layouts/
+│   │   │   ├── MainLayout.tsx
+│   │   │   └── DashboardLayout.tsx
+│   │   ├── utils/
+│   │   │   ├── api.ts                     # Axios + token refresh interceptor
+│   │   │   └── cn.ts
+│   │   └── data/
+│   │       └── mockData.ts
 │   ├── vite.config.ts
 │   └── package.json
 │
 ├── server/                         # Node.js + Express 5 Backend
 │   ├── src/
-│   │   ├── controllers/            # Request handlers
+│   │   ├── controllers/
 │   │   │   ├── auth.controller.ts
 │   │   │   ├── user.controller.ts
 │   │   │   ├── vehicle.controller.ts
 │   │   │   ├── booking.controller.ts
-│   │   │   ├── payment.controller.ts
+│   │   │   ├── payment.controller.ts      # Razorpay order + verify
 │   │   │   ├── review.controller.ts
 │   │   │   └── notification.controller.ts
-│   │   ├── routes/                 # Express route definitions
+│   │   ├── routes/
 │   │   │   ├── auth.routes.ts
 │   │   │   ├── user.routes.ts
 │   │   │   ├── vehicle.routes.ts
 │   │   │   ├── booking.routes.ts
-│   │   │   └── index.ts
-│   │   ├── repositories/           # Data access layer (Prisma queries)
-│   │   ├── services/               # Business logic layer
-│   │   ├── middleware/             # Auth, rate-limit, error, validation
-│   │   ├── validators/             # Zod schemas
-│   │   ├── config/                 # Config, Logger setup
-│   │   ├── lib/                    # Shared lib (Prisma client, Redis, etc.)
-│   │   ├── types/                  # TypeScript type definitions
-│   │   ├── utils/                  # Helpers (ApiError, ApiResponse)
-│   │   ├── constants/              # Server-side constants
-│   │   ├── app.ts                  # Express app setup
-│   │   └── server.ts               # Server entry point
+│   │   │   ├── payment.routes.ts          # NEW
+│   │   │   ├── review.routes.ts           # NEW
+│   │   │   ├── notification.routes.ts     # NEW
+│   │   │   └── index.ts                   # All routes registered
+│   │   ├── repositories/
+│   │   │   ├── booking.repository.ts
+│   │   │   ├── vehicle.repository.ts
+│   │   │   ├── review.repository.ts
+│   │   │   ├── notification.repository.ts
+│   │   │   ├── availability.repository.ts
+│   │   │   ├── token.repository.ts
+│   │   │   └── user.repository.ts
+│   │   ├── services/
+│   │   │   ├── auth.service.ts
+│   │   │   ├── booking.service.ts         # 🔌 Real-time events on status change
+│   │   │   ├── payment.service.ts         # 🔌 Real-time payment confirmation
+│   │   │   ├── review.service.ts
+│   │   │   ├── vehicle.service.ts
+│   │   │   └── storage.service.ts
+│   │   ├── lib/
+│   │   │   └── socketManager.ts           # 🔌 Socket.IO singleton + emit helpers
+│   │   ├── middleware/
+│   │   │   ├── auth.middleware.ts
+│   │   │   ├── error.middleware.ts
+│   │   │   ├── rateLimit.middleware.ts
+│   │   │   ├── role.middleware.ts
+│   │   │   ├── upload.middleware.ts
+│   │   │   └── validator.middleware.ts
+│   │   ├── config/
+│   │   │   ├── config.ts                  # Zod-validated env
+│   │   │   ├── db.ts
+│   │   │   ├── logger.ts
+│   │   │   └── cloudinary.ts
+│   │   ├── utils/
+│   │   │   ├── apiError.ts
+│   │   │   ├── apiResponse.ts
+│   │   │   └── asyncHandler.ts
+│   │   ├── validators/
+│   │   ├── types/
+│   │   ├── constants/
+│   │   ├── app.ts                         # Express setup + CORS
+│   │   └── server.ts                      # HTTP server + Socket.IO init
 │   ├── prisma/
-│   │   ├── schema.prisma           # Database schema
-│   │   └── migrations/             # Prisma migration history
+│   │   ├── schema.prisma
+│   │   └── migrations/
 │   └── package.json
 │
 ├── Jenkinsfile                     # CI/CD Pipeline definition
 └── README.md
 ```
+
+---
+
+## 🔌 Real-Time Features (Socket.IO)
+
+CarBoom uses Socket.IO to push live events directly to users without page refresh.
+
+### How It Works
+
+1. **After login** — `SocketContext` connects and emits `join(userId)` to join a personal room.
+2. **Server services** use `socketManager.ts` helpers to emit events after DB writes.
+3. **Client listens** via `useSocket()` hook and updates the UI instantly.
+
+### Events
+
+| Event | Direction | Trigger | Description |
+|-------|-----------|---------|-------------|
+| `join` | Client → Server | After login | User joins personal socket room |
+| `joined` | Server → Client | Ack | Confirms room membership |
+| `notification:new` | Server → Client | Any notification created | Shows toast + increments bell badge |
+| `booking:updated` | Server → Client | Booking status change | Refresh booking list UI |
+| `payment:confirmed` | Server → Client | Payment verified | Show success toast + navigate |
+
+### NotificationBell Component
+
+- 🔔 **Live badge** — increments on every `notification:new` event
+- 📋 **Dropdown panel** — merges Socket.IO live stream with DB history (REST API)
+- ✅ **Mark all read** — calls `PATCH /api/v1/notifications/read-all` + clears badge
+- 🎨 **Glassmorphism design** with animated slide-in panel
+
+---
+
+## 🔒 Auth & Route Protection
+
+### Route Guards
+
+| Guard | Used On | Behaviour |
+|-------|---------|-----------|
+| `GuestRoute` | `/login`, `/signup` | Redirects logged-in users to `/dashboard` |
+| `ProtectedRoute` | `/checkout`, `/payment`, `/booking-confirmation`, `/dashboard/*` | Redirects guests to `/login` with `returnTo` state |
+
+### Booking Intent Flow
+
+When a **guest** tries to book:
+
+```
+Vehicle Details → handleBooking()
+  ↓ Not authenticated
+  ↓ Save bookingIntent to localStorage
+  ↓ navigate("/login", { state: { returnTo: vehicleUrl } })
+  
+Login page → onSubmit()
+  ↓ Login success
+  ↓ bookingIntent exists? → navigate("/checkout")
+  ↓ else → navigate(returnTo) or "/dashboard"
+```
+
+This ensures the **booking intent is never lost** even when the user is not logged in.
 
 ---
 
@@ -376,18 +529,48 @@ API Docs (Swagger): `http://localhost:5000/api-docs`
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
+| `POST` | `/calculate` | ❌ | Calculate booking price |
 | `POST` | `/` | ✅ | Create a booking |
 | `GET` | `/my` | ✅ | Get renter's bookings |
 | `GET` | `/owner` | ✅ | Get owner's received bookings |
-| `PATCH` | `/:id/cancel` | ✅ | Cancel a booking |
+| `GET` | `/owner/analytics` | ✅ | Owner earnings & stats |
+| `GET` | `/:id` | ✅ | Get booking by ID |
+| `PATCH` | `/:id/status` | ✅ | Update booking status (Owner) |
+| `POST` | `/:id/cancel` | ✅ | Cancel a booking |
+
+### Payment Routes — `/api/v1/payments`
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/create-order` | ✅ | Create Razorpay order |
+| `POST` | `/verify` | ✅ | Verify payment + confirm booking |
+| `POST` | `/refund` | ✅ | Process refund |
+| `GET` | `/booking/:bookingId` | ✅ | Get payment for a booking |
+
+### Review Routes — `/api/v1/reviews`
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/vehicle/:vehicleId` | ❌ | Get vehicle reviews (paginated) |
+| `POST` | `/` | ✅ | Submit review (completed booking required) |
+| `GET` | `/user/me` | ✅ | Get logged-in user's reviews |
+| `DELETE` | `/:id` | ✅ | Delete own review |
+
+### Notification Routes — `/api/v1/notifications`
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/` | ✅ | Get user notifications |
+| `PATCH` | `/:id/read` | ✅ | Mark one notification as read |
+| `PATCH` | `/read-all` | ✅ | Mark all notifications as read |
 
 ### User Routes — `/api/v1/users`
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | `GET` | `/profile` | ✅ | Get user profile |
-| `PATCH` | `/profile` | ✅ | Update user profile |
-| `POST` | `/avatar` | ✅ | Upload profile avatar |
+| `PUT` | `/profile` | ✅ | Update user profile |
+| `POST` | `/profile/photo` | ✅ | Upload profile avatar |
 
 ---
 
@@ -424,8 +607,10 @@ Create a `client/.env` file (or leave it empty for local dev — the Vite proxy 
 
 ```env
 # Leave unset to use the Vite dev proxy (recommended for local dev)
-# VITE_API_URL=https://carboom-backend.onrender.com/api/v1
+# VITE_API_URL=https://carboom-backend.onrender.com
 ```
+
+> **Note:** `VITE_API_URL` should be the **origin only** (no `/api/v1` suffix). The client normalizes the path automatically.
 
 ### 3. Start the dev server
 
@@ -476,7 +661,7 @@ CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 
-# Razorpay
+# Razorpay (leave blank for mock/demo mode)
 RAZORPAY_KEY_ID=
 RAZORPAY_KEY_SECRET=
 
@@ -503,13 +688,17 @@ npm run dev
 ```
 
 Backend runs at: **`http://localhost:5000`**  
+Socket.IO: **`ws://localhost:5000`**  
 Swagger Docs: **`http://localhost:5000/api-docs`**
+
+> **Note:** The server now creates an `http.createServer(app)` so that Express and Socket.IO share the same port — no separate WebSocket port needed.
 
 ---
 
 ## 🏗️ Jenkins CI Setup
 
 ### Required Jenkins Plugins
+
 - **Pipeline**
 - **Git**
 - **Credentials Binding**
@@ -517,6 +706,7 @@ Swagger Docs: **`http://localhost:5000/api-docs`**
 - **AnsiColor**
 
 ### Credentials to Create
+
 > Jenkins → Manage Jenkins → Credentials → System → Global
 
 | Credential ID | Type | Description |
@@ -562,50 +752,54 @@ Swagger Docs: **`http://localhost:5000/api-docs`**
 ## ✅ Features & Roadmap
 
 ### Renter
+
 - [x] Browse & search vehicles (location, type, fuel, price, transmission)
-- [x] Vehicle detail page
-- [x] Checkout & booking flow
-- [x] Razorpay payment integration
-- [x] Booking confirmation
+- [x] Vehicle detail page with live pricing calculator
+- [x] **Login-protected booking flow** — guests redirected with intent preserved
+- [x] **Real checkout page** — reads bookingIntent from localStorage, real pricing breakdown
+- [x] Razorpay payment integration with mock verify support
+- [x] **Real-time payment confirmation** via Socket.IO
+- [x] Booking confirmation page
 - [x] Booking history (Dashboard)
 - [x] Wishlist / Favourites
-- [x] Ratings & Reviews
+- [x] Ratings & Reviews (post-trip only)
 - [x] User profile management
 - [x] Forgot / Reset password flow
 
 ### Owner
+
 - [x] List & manage vehicles
 - [x] Upload vehicle images & documents
-- [x] Manage bookings
+- [x] Manage bookings (confirm / reject / mark active / complete)
+- [x] **Real-time booking request notifications**
 - [x] Owner verification submission
 - [x] Revenue analytics (Dashboard)
 
-### Admin
-- [x] User management
-- [x] Owner verification workflow
-- [x] Vehicle approval pipeline
-- [x] Audit logs
-
 ### Platform
-- [x] JWT + Refresh Token authentication
+
+- [x] JWT + Refresh Token authentication with silent refresh
 - [x] Google & GitHub OAuth
 - [x] Role-Based Access Control (RENTER / OWNER / ADMIN)
-- [x] Real-time notifications (Socket.IO)
+- [x] **Real-time Socket.IO notifications** — booking + payment events
+- [x] **NotificationBell** — animated badge, dropdown panel, DB sync
+- [x] **ProtectedRoute & GuestRoute** guards
+- [x] **bookingIntent pattern** — seamless post-login booking resume
+- [x] All API routes registered (vehicles, bookings, payments, reviews, notifications)
 - [x] Rate limiting & Helmet security headers
 - [x] Structured logging (Winston + Morgan)
 - [x] Swagger API documentation
-- [x] Redis caching
 - [x] Jenkins CI/CD pipeline
 - [x] Deployed on Vercel (frontend) + Render (backend)
 - [ ] AI-based vehicle recommendations
-- [ ] Live vehicle tracking
-- [ ] Chat / messaging system
-- [ ] Dynamic pricing
+- [ ] Live vehicle tracking (GPS)
+- [ ] In-app chat / messaging system
+- [ ] Dynamic surge pricing
 - [ ] Insurance integration
 - [ ] EV Charging Station Finder
 - [ ] Mobile app (Android & iOS)
-- [ ] Multi-language support
+- [ ] Multi-language support (Hindi, Tamil, etc.)
 - [ ] Referral & Rewards program
+- [ ] Admin panel (web dashboard)
 
 ---
 
