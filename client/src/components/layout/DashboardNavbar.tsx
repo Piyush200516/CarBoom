@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-    Menu, X, Bell, MessageSquare, ChevronDown, 
+    Menu, X, MessageSquare, ChevronDown, 
     MapPin, Search, Navigation, User
 } from "lucide-react";
 import { useAuth } from "../../store/AuthContext";
+import NotificationBell from "../ui/NotificationBell";
 
 const locations = [
     "Indore", "Bhopal", "Delhi", "Mumbai", 
@@ -156,10 +157,8 @@ const DashboardNavbar = () => {
                             <MessageSquare size={20} />
                             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-yellow-400 rounded-full border border-[#0b0f19]"></span>
                         </Link>
-                        <button className="relative p-2 text-gray-300 hover:text-yellow-400 hover:bg-white/5 rounded-full transition">
-                            <Bell size={20} />
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-[#0b0f19]"></span>
-                        </button>
+                        {/* 🔌 Real-time notification bell */}
+                        <NotificationBell />
                     </div>
 
                     {/* Profile Menu */}

@@ -1,15 +1,18 @@
 import AppRoutes from "./router/AppRoutes";
 import { GlobalToastProvider } from "./components/ui/Toast";
 import { AuthProvider } from "./store/AuthContext";
+import { SocketProvider } from "./store/SocketContext";
 
 function App() {
   return (
     <AuthProvider>
-      <GlobalToastProvider>
-        <AppRoutes />
-      </GlobalToastProvider>
+      <SocketProvider>
+        <GlobalToastProvider>
+          <AppRoutes />
+        </GlobalToastProvider>
+      </SocketProvider>
     </AuthProvider>
   );
 }
 
-export default App;
+export default App;
