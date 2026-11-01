@@ -224,8 +224,8 @@ export class BookingService {
     const isOwner = booking.vehicle.owner.id === userId;
     if (!isRenter && !isOwner) throw new ApiError(403, "Access denied.");
 
-    const cancellable = [BookingStatus.PENDING, BookingStatus.CONFIRMED];
-    if (!cancellable.includes(booking.status)) {
+    const cancellable: BookingStatus[] = [BookingStatus.PENDING, BookingStatus.CONFIRMED];
+    if (!cancellable.includes(booking.status as BookingStatus)) {
       throw new ApiError(400, `Cannot cancel a booking that is ${booking.status}.`);
     }
 

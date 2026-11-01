@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import "./Payment.css";
+import paymentService from "../../services/paymentService";
+import { useSocket } from "../../store/SocketContext";
+import { toast } from "../../components/ui/Toast";
 
 const API_BASE = "http://localhost:4321";
 
@@ -26,6 +29,7 @@ type PaymentTab = "card" | "cod" | "netbanking";
 
 const Payment: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [carDetails, setCarDetails] = useState<CarDetails | null>(null);
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
@@ -39,6 +43,7 @@ const Payment: React.FC = () => {
   const [cvv, setCvv] = useState("");
   const [cardErrors, setCardErrors] = useState<string[]>([]);
   const [paying, setPaying] = useState(false);
+
   // Generate a stable booking ID once on mount (not on every render)
   const [bookingId] = useState(() =>
     Math.random().toString(36).substr(2, 9).toUpperCase()
@@ -46,6 +51,22 @@ const Payment: React.FC = () => {
 
   // Retrieve total from localStorage (set by Checkout page)
   const totalPayable = Number(localStorage.getItem("CheckoutPaymentTotal") ?? 0);
+
+  // Real booking ID from URL params (set by Checkout page when creating a booking)
+  const realBookingId = searchParams.get("bookingId") ?? localStorage.getItem("currentBookingId");
+
+  // 🔌 Real-time payment confirmation listener
+  const { onPaymentConfirmed } = useSocket();
+  useEffect(() => {
+    const unsub = onPaymentConfirmed((payload) => {
+      toast.success(
+        "💳 Payment Confirmed!",
+        `₹${payload.amount.toLocaleString("en-IN")} paid for ${payload.vehicleName}`
+      );
+      setTimeout(() => navigate("/booking-confirmation"), 1200);
+    });
+    return unsub;
+  }, [onPaymentConfirmed, navigate]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -89,11 +110,39 @@ const Payment: React.FC = () => {
     }
 
     setPaying(true);
-    // Simulate a payment network call (replace with real gateway integration)
-    await new Promise((res) => setTimeout(res, 1500));
-    setPaying(false);
-    navigate("/booking-confirmation");
+    try {
+      if (realBookingId) {
+        // Real payment flow via API
+        const order = await paymentService.createOrder({
+          bookingId: realBookingId,
+          amount: totalPayable,
+          method: "RAZORPAY",
+        });
+
+        // Mock verify (in production, use real Razorpay callback data)
+        await paymentService.verifyPayment({
+          bookingId: realBookingId,
+          razorpayOrderId: order.orderId,
+          razorpayPaymentId: `pay_mock_${Date.now()}`,
+          razorpaySignature: "mock_signature",
+        });
+
+        // 🔌 Real-time event will navigate us — but also navigate as fallback
+        toast.success("Payment successful! Redirecting...");
+        setTimeout(() => navigate("/booking-confirmation"), 1500);
+      } else {
+        // Fallback: simulate payment (demo mode / no bookingId)
+        await new Promise((res) => setTimeout(res, 1500));
+        navigate("/booking-confirmation");
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? "Payment failed. Please try again.";
+      toast.error("Payment Error", msg);
+    } finally {
+      setPaying(false);
+    }
   };
+
 
   const excessKmDisplay = carDetails
     ? carDetails.excessKM.replace(/^Excess\s*/i, "")
