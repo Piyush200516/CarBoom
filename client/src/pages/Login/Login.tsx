@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../../store/AuthContext";
 import { useToast } from "../../components/ui/Toast";
@@ -32,6 +32,10 @@ export const Login = () => {
   const { login } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Where to go after login (set by VehicleDetails when it redirects here)
+  const returnTo = (location.state as { returnTo?: string } | null)?.returnTo;
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
@@ -42,7 +46,16 @@ export const Login = () => {
           description: `Welcome back, ${response.data.user.name}!`,
           type: "success",
         });
-        navigate("/dashboard");
+
+        // If user came here from a vehicle page with a booking intent, go to checkout
+        const hasBookingIntent = !!localStorage.getItem("bookingIntent");
+        if (returnTo && hasBookingIntent) {
+          navigate("/checkout");
+        } else if (returnTo) {
+          navigate(returnTo);
+        } else {
+          navigate("/dashboard");
+        }
       }
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;

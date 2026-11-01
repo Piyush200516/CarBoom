@@ -1,118 +1,108 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Checkout.css";
+import { useAuth } from "../../store/AuthContext";
 
-const API_BASE = "http://localhost:4321";
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-interface CarDetails {
-  image: string;
-  name: string;
-  seater: string;
-  bookingFee: string;
-  freeDistance: string | number;
-  excessKM: string;
+interface BookingIntent {
+  vehicleId: string;
+  vehicleName: string;
+  image?: string;
+  seats?: number;
+  pickupDate: string;
+  returnDate: string;
+  pickupLoc: string;
+  baseTotal: number;
+  cgst: number;
+  sgst: number;
+  refundDeposit: number;
+  grandTotal: number;
+  durationLabel: string;
 }
 
-interface BookingDetails {
-  starttime: string;
-  startdate: string;
-  startmonth: string;
-  endtime: string;
-  enddate: string;
-  endmonth: string;
-  location?: string;
-}
-
-// Utility – add thousands separator
 function formatAmount(num: number): string {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-// Strip commas and parse back to number
-function parseAmount(str: string): number {
-  return Number(String(str).replace(/,/g, ""));
-}
-
-const REFUNDABLE_DEPOSIT = 1499;
 const PROMO_CODES: Record<string, number> = {
   MASAI25: 25,
   FTWEB10: 60,
+  CARBOOM10: 10,
 };
 
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading } = useAuth();
 
-  const [carDetails, setCarDetails] = useState<CarDetails | null>(null);
-  const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
+  const [intent, setIntent] = useState<BookingIntent | null>(null);
   const [promoCode, setPromoCode] = useState("");
   const [discountMsg, setDiscountMsg] = useState("");
   const [discountAmt, setDiscountAmt] = useState(0);
-  const [loading, setLoading] = useState(true);
 
-  // Fetch car & booking details from the backend
+  // ── Auth guard ───────────────────────────────────────────────────────────
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [carRes, bookingRes] = await Promise.all([
-          fetch(`${API_BASE}/checkout/`),
-          fetch(`${API_BASE}/details/`),
-        ]);
-        const carData: CarDetails[] = await carRes.json();
-        const bookingData: BookingDetails[] = await bookingRes.json();
-        setCarDetails(carData[0]);
-        setBookingDetails(bookingData[0]);
-      } catch (err) {
-        console.error("Failed to load checkout details:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+    if (!isLoading && !isAuthenticated) {
+      navigate("/login", { state: { returnTo: "/checkout" } });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
-  const bookingFeeNum = carDetails ? parseAmount(carDetails.bookingFee) : 0;
-  const totalPayable = bookingFeeNum + REFUNDABLE_DEPOSIT - discountAmt;
+  // ── Load booking intent from localStorage ────────────────────────────────
+  useEffect(() => {
+    const raw = localStorage.getItem("bookingIntent");
+    if (!raw) {
+      navigate("/browse");
+      return;
+    }
+    try {
+      const parsed: BookingIntent = JSON.parse(raw);
+      setIntent(parsed);
+    } catch {
+      navigate("/browse");
+    }
+  }, [navigate]);
+
+  const totalPayable = intent ? intent.grandTotal - discountAmt : 0;
 
   // Apply promo code
   const applyPromo = useCallback(() => {
     const code = promoCode.trim().toUpperCase();
-    if (!carDetails) return;
+    if (!intent) return;
 
     if (code in PROMO_CODES) {
       const pct = PROMO_CODES[code];
-      const discount = Math.ceil((bookingFeeNum * pct) / 100);
+      const discount = Math.ceil((intent.baseTotal * pct) / 100);
       setDiscountAmt(discount);
-      setDiscountMsg(`✅ Discount Applied: ₹${formatAmount(discount)}`);
+      setDiscountMsg(`✅ Promo Applied: ₹${formatAmount(discount)} off`);
     } else {
       setDiscountAmt(0);
       setDiscountMsg("❌ Invalid promo code");
     }
     setPromoCode("");
-  }, [promoCode, carDetails, bookingFeeNum]);
+  }, [promoCode, intent]);
 
   const handlePromoKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") applyPromo();
   };
 
-  // Strip excessKM prefix text (e.g. "Excess Rs.12/ km" → "12/ km")
-  const excessKmDisplay = carDetails
-    ? carDetails.excessKM.replace(/^Excess\s*/i, "")
-    : "";
+  // Format date/time for display
+  const formatDate = (iso: string) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    return d.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
-  if (loading) {
+  if (isLoading || !intent) {
     return (
       <div className="checkout-loading">
         <div className="spinner" />
         <p>Loading checkout…</p>
-      </div>
-    );
-  }
-
-  if (!carDetails || !bookingDetails) {
-    return (
-      <div className="checkout-error">
-        <p>Unable to load booking details. Please go back and try again.</p>
-        <button onClick={() => navigate("/browse")}>Back to Browse</button>
       </div>
     );
   }
@@ -138,7 +128,7 @@ const Checkout: React.FC = () => {
         <div className="step-line" />
         <div className="step">
           <div className="step-circle">4</div>
-          <div className="step-label">Profile</div>
+          <div className="step-label">Confirmed</div>
         </div>
       </div>
 
@@ -148,15 +138,32 @@ const Checkout: React.FC = () => {
           <h1 className="checkout-title">CHECKOUT</h1>
           <hr />
 
-          {/* Booking fee */}
+          {/* Base rental fee */}
           <div className="fee-row">
             <div>
-              <h3>Booking Fee</h3>
-              <p className="fee-sub">Booking fee excludes fuel cost</p>
+              <h3>Base Rental ({intent.durationLabel})</h3>
+              <p className="fee-sub">{intent.pickupLoc}</p>
             </div>
             <div className="fee-amount">
               <span>₹</span>
-              <span>{formatAmount(bookingFeeNum)}</span>
+              <span>{formatAmount(intent.baseTotal)}</span>
+            </div>
+          </div>
+          <hr />
+
+          <div className="fee-row">
+            <div><h3>CGST (9%)</h3></div>
+            <div className="fee-amount">
+              <span>₹</span>
+              <span>{formatAmount(intent.cgst)}</span>
+            </div>
+          </div>
+
+          <div className="fee-row">
+            <div><h3>SGST (9%)</h3></div>
+            <div className="fee-amount">
+              <span>₹</span>
+              <span>{formatAmount(intent.sgst)}</span>
             </div>
           </div>
           <hr />
@@ -183,27 +190,33 @@ const Checkout: React.FC = () => {
           </div>
           <hr />
 
-          <div className="view-offers">
-            <a href="#offers">View More Offers</a>
-          </div>
-          <hr />
+          {discountAmt > 0 && (
+            <>
+              <div className="fee-row">
+                <div><h3>Promo Discount</h3></div>
+                <div className="fee-amount promo-discount">
+                  <span>− ₹</span>
+                  <span>{formatAmount(discountAmt)}</span>
+                </div>
+              </div>
+              <hr />
+            </>
+          )}
 
           {/* Refundable deposit */}
           <div className="fee-row">
             <div>
               <h3>Refundable Deposit</h3>
-              <label className="deposit-checkbox">
-                <input type="checkbox" /> Pay Now
-              </label>
+              <p className="fee-sub">Fully refunded after vehicle return</p>
             </div>
             <div className="fee-amount">
               <span>₹</span>
-              <span>{formatAmount(REFUNDABLE_DEPOSIT)}</span>
+              <span>{formatAmount(intent.refundDeposit)}</span>
             </div>
           </div>
           <hr />
 
-          {/* Total payable */}
+          {/* Grand total */}
           <div className="total-row">
             <p>Total Payable Amount</p>
             <div className="total-amount">
@@ -212,7 +225,7 @@ const Checkout: React.FC = () => {
             </div>
           </div>
 
-          {/* Checkout button */}
+          {/* → Payment page */}
           <div className="checkout-btn-wrap">
             <button
               className="checkout-btn"
@@ -221,55 +234,49 @@ const Checkout: React.FC = () => {
                 navigate("/payment");
               }}
             >
-              CHECKOUT
+              PROCEED TO PAYMENT →
             </button>
           </div>
         </div>
 
         {/* Right panel – booking summary */}
         <div className="summary-panel">
-          <p className="summary-heading">SUMMARY</p>
-          <img
-            src={carDetails.image}
-            alt={carDetails.name}
-            className="summary-car-img"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = "none";
-            }}
-          />
-          <p className="summary-car-name">{carDetails.name}</p>
-          <p className="summary-car-seat">( {carDetails.seater} )</p>
+          <p className="summary-heading">BOOKING SUMMARY</p>
+
+          {intent.image && (
+            <img
+              src={intent.image}
+              alt={intent.vehicleName}
+              className="summary-car-img"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+          )}
+
+          <p className="summary-car-name">{intent.vehicleName}</p>
+          {intent.seats && (
+            <p className="summary-car-seat">( {intent.seats} Seater )</p>
+          )}
           <hr />
 
-          {/* Pickup / Drop times */}
           <div className="summary-times">
             <div className="time-col">
-              <h2 className="time-val">{bookingDetails.starttime}</h2>
+              <h2 className="time-val">PICKUP</h2>
               <hr className="time-hr" />
-              <p className="time-date">
-                {bookingDetails.startdate} {bookingDetails.startmonth}
-              </p>
+              <p className="time-date">{formatDate(intent.pickupDate)}</p>
             </div>
             <div className="time-to">TO</div>
             <div className="time-col">
-              <h2 className="time-val">{bookingDetails.endtime}</h2>
+              <h2 className="time-val">RETURN</h2>
               <hr className="time-hr" />
-              <p className="time-date">
-                {bookingDetails.enddate} {bookingDetails.endmonth}
-              </p>
+              <p className="time-date">{formatDate(intent.returnDate)}</p>
             </div>
           </div>
 
-          {/* Free / Excess KMs */}
-          <div className="km-info">
-            <div className="km-labels">
-              <p>Free Km</p>
-              <p>Excess Km</p>
-            </div>
-            <div className="km-values">
-              <p>{carDetails.freeDistance} kms</p>
-              <p>{excessKmDisplay}</p>
-            </div>
+          <div className="summary-loc">
+            <span>📍</span>
+            <span>{intent.pickupLoc}</span>
           </div>
           <hr />
 

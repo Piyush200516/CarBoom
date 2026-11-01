@@ -1,6 +1,6 @@
 // src/router/AppRoutes.tsx
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import Home from "../pages/Home/Home";
@@ -49,6 +49,25 @@ const GuestRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+/**
+ * ProtectedRoute – requires authentication.
+ * Redirects guests to /login while preserving the intended destination.
+ */
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-[#0b0f19]" aria-busy="true" />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ returnTo: location.pathname }} replace />;
+  }
+
+  return <>{children}</>;
+};
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -57,10 +76,10 @@ const AppRoutes = () => {
       <Route path="/signup" element={<GuestRoute><Signup /></GuestRoute>} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      {/* Booking flow pages – from legacy frontend folder */}
-      <Route path="/checkout" element={<Checkout />} />
-      <Route path="/payment" element={<Payment />} />
-      <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+      {/* Booking flow pages — protected: login required */}
+      <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+      <Route path="/payment" element={<ProtectedRoute><Payment /></ProtectedRoute>} />
+      <Route path="/booking-confirmation" element={<ProtectedRoute><BookingConfirmation /></ProtectedRoute>} />
 
       {/* Authenticated Dashboard Pages — DashboardLayout handles auth guard */}
         {/* Profile Page */}

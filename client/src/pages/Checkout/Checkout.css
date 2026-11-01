@@ -356,3 +356,19 @@ hr {
   }
   .step-line { width: 40px; }
 }
+
+/* Summary location row */
+.summary-loc {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  font-size: 13px;
+  color: #555;
+  font-weight: 500;
+}
+
+/* Promo discount row (green) */
+.fee-amount.promo-discount {
+  color: #22c55e;
+}

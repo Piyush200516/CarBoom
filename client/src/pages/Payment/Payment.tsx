@@ -5,34 +5,34 @@ import paymentService from "../../services/paymentService";
 import { useSocket } from "../../store/SocketContext";
 import { toast } from "../../components/ui/Toast";
 
-const API_BASE = "http://localhost:4321";
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-interface CarDetails {
-  image: string;
-  name: string;
-  seater: string;
-  bookingFee: string;
-  freeDistance: string | number;
-  excessKM: string;
-}
-
-interface BookingDetails {
-  starttime: string;
-  startdate: string;
-  startmonth: string;
-  endtime: string;
-  enddate: string;
-  endmonth: string;
+interface BookingIntent {
+  vehicleId: string;
+  vehicleName: string;
+  image?: string;
+  seats?: number;
+  pickupDate: string;
+  returnDate: string;
+  pickupLoc: string;
+  baseTotal: number;
+  cgst: number;
+  sgst: number;
+  refundDeposit: number;
+  grandTotal: number;
+  durationLabel: string;
 }
 
 type PaymentTab = "card" | "cod" | "netbanking";
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 const Payment: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const [carDetails, setCarDetails] = useState<CarDetails | null>(null);
-  const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
+  // Load booking intent
+  const [intent, setIntent] = useState<BookingIntent | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<PaymentTab>("card");
 
@@ -44,18 +44,29 @@ const Payment: React.FC = () => {
   const [cardErrors, setCardErrors] = useState<string[]>([]);
   const [paying, setPaying] = useState(false);
 
-  // Generate a stable booking ID once on mount (not on every render)
+  // Stable display booking ID
   const [bookingId] = useState(() =>
     Math.random().toString(36).substr(2, 9).toUpperCase()
   );
 
-  // Retrieve total from localStorage (set by Checkout page)
+  // Total from localStorage (set by Checkout)
   const totalPayable = Number(localStorage.getItem("CheckoutPaymentTotal") ?? 0);
 
-  // Real booking ID from URL params (set by Checkout page when creating a booking)
+  // Real booking ID from URL params or localStorage
   const realBookingId = searchParams.get("bookingId") ?? localStorage.getItem("currentBookingId");
 
-  // 🔌 Real-time payment confirmation listener
+  // ── Load intent ─────────────────────────────────────────────────────────
+  useEffect(() => {
+    const raw = localStorage.getItem("bookingIntent");
+    if (raw) {
+      try {
+        setIntent(JSON.parse(raw) as BookingIntent);
+      } catch { /* ignore */ }
+    }
+    setLoading(false);
+  }, []);
+
+  // ── 🔌 Real-time payment confirmation ────────────────────────────────────
   const { onPaymentConfirmed } = useSocket();
   useEffect(() => {
     const unsub = onPaymentConfirmed((payload) => {
@@ -68,27 +79,7 @@ const Payment: React.FC = () => {
     return unsub;
   }, [onPaymentConfirmed, navigate]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [carRes, bookingRes] = await Promise.all([
-          fetch(`${API_BASE}/checkout/`),
-          fetch(`${API_BASE}/details/`),
-        ]);
-        const carData: CarDetails[] = await carRes.json();
-        const bookingData: BookingDetails[] = await bookingRes.json();
-        setCarDetails(carData[0]);
-        setBookingDetails(bookingData[0]);
-      } catch (err) {
-        console.error("Failed to load payment details:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
-  // Validate card fields
+  // ── Card validation ──────────────────────────────────────────────────────
   const validateCard = useCallback((): boolean => {
     const errors: string[] = [];
     if (cardNum.replace(/\s/g, "").length !== 16)
@@ -101,10 +92,10 @@ const Payment: React.FC = () => {
     return errors.length === 0;
   }, [cardNum, mm, exYear, cvv]);
 
+  // ── Payment handler ──────────────────────────────────────────────────────
   const handlePayment = async () => {
     if (activeTab === "card" && !validateCard()) return;
     if (activeTab === "cod") {
-      // COD — just navigate to confirmation
       navigate("/booking-confirmation");
       return;
     }
@@ -112,41 +103,41 @@ const Payment: React.FC = () => {
     setPaying(true);
     try {
       if (realBookingId) {
-        // Real payment flow via API
         const order = await paymentService.createOrder({
           bookingId: realBookingId,
           amount: totalPayable,
           method: "RAZORPAY",
         });
-
-        // Mock verify (in production, use real Razorpay callback data)
         await paymentService.verifyPayment({
           bookingId: realBookingId,
           razorpayOrderId: order.orderId,
           razorpayPaymentId: `pay_mock_${Date.now()}`,
           razorpaySignature: "mock_signature",
         });
-
-        // 🔌 Real-time event will navigate us — but also navigate as fallback
         toast.success("Payment successful! Redirecting...");
         setTimeout(() => navigate("/booking-confirmation"), 1500);
       } else {
-        // Fallback: simulate payment (demo mode / no bookingId)
+        // Demo/fallback: simulate
         await new Promise((res) => setTimeout(res, 1500));
         navigate("/booking-confirmation");
       }
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? "Payment failed. Please try again.";
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        "Payment failed. Please try again.";
       toast.error("Payment Error", msg);
     } finally {
       setPaying(false);
     }
   };
 
-
-  const excessKmDisplay = carDetails
-    ? carDetails.excessKM.replace(/^Excess\s*/i, "")
-    : "";
+  const formatDate = (iso: string) => {
+    if (!iso) return "—";
+    return new Date(iso).toLocaleString("en-IN", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+  };
 
   if (loading) {
     return (
@@ -161,7 +152,7 @@ const Payment: React.FC = () => {
     <div className="payment-page">
       {/* Progress stepper */}
       <div className="pay-stepper">
-        {["Login/Signup", "Checkout", "Payment", "Profile"].map((label, i) => (
+        {["Login/Signup", "Checkout", "Payment", "Confirmed"].map((label, i) => (
           <React.Fragment key={label}>
             <div className="pay-step">
               <div className={`pay-circle ${i < 3 ? "done" : ""}`}>{i + 1}</div>
@@ -190,9 +181,7 @@ const Payment: React.FC = () => {
               <h2>Payment Methods</h2>
               <div className="booking-id">
                 Booking ID:{" "}
-                <span id="bk_id">
-                  {bookingId}
-                </span>
+                <span id="bk_id">{bookingId}</span>
               </div>
             </div>
 
@@ -289,47 +278,41 @@ const Payment: React.FC = () => {
           </div>
         </div>
 
-        {/* Right – Summary */}
-        {carDetails && bookingDetails && (
+        {/* Right – Booking Summary */}
+        {intent && (
           <div className="pay-summary-panel">
             <p className="summary-heading">SUMMARY</p>
-            <img
-              src={carDetails.image}
-              alt={carDetails.name}
-              className="summary-car-img"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-              }}
-            />
-            <p className="summary-car-name">{carDetails.name}</p>
-            <p className="summary-car-seat">( {carDetails.seater} )</p>
+            {intent.image && (
+              <img
+                src={intent.image}
+                alt={intent.vehicleName}
+                className="summary-car-img"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
+              />
+            )}
+            <p className="summary-car-name">{intent.vehicleName}</p>
+            {intent.seats && (
+              <p className="summary-car-seat">( {intent.seats} Seater )</p>
+            )}
             <hr />
             <div className="summary-times">
               <div className="time-col">
-                <h2 className="time-val">{bookingDetails.starttime}</h2>
+                <h2 className="time-val">PICKUP</h2>
                 <hr className="time-hr" />
-                <p className="time-date">
-                  {bookingDetails.startdate} {bookingDetails.startmonth}
-                </p>
+                <p className="time-date">{formatDate(intent.pickupDate)}</p>
               </div>
               <div className="time-to">TO</div>
               <div className="time-col">
-                <h2 className="time-val">{bookingDetails.endtime}</h2>
+                <h2 className="time-val">RETURN</h2>
                 <hr className="time-hr" />
-                <p className="time-date">
-                  {bookingDetails.enddate} {bookingDetails.endmonth}
-                </p>
+                <p className="time-date">{formatDate(intent.returnDate)}</p>
               </div>
             </div>
-            <div className="km-info">
-              <div className="km-labels">
-                <p>Free Km</p>
-                <p>Excess Km</p>
-              </div>
-              <div className="km-values">
-                <p>{carDetails.freeDistance} kms</p>
-                <p>{excessKmDisplay}</p>
-              </div>
+            <div className="pay-summary-loc">
+              <span>📍</span>
+              <span>{intent.pickupLoc}</span>
             </div>
             <hr />
             <div className="fare-inclusions">
