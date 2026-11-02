@@ -483,7 +483,12 @@ Login page → onSubmit()
   ↓ bookingIntent exists? → navigate("/checkout")
   ↓ else → navigate(returnTo) or "/dashboard"
 ```
-
+<p align="center">
+  <img src="./docs/screenshots/vehicle-details.png" width="30%" alt="Vehicle Details" />
+  <img src="./docs/screenshots/login.png" width="30%" alt="Login" />
+  <img src="./docs/screenshots/checkout.png" width="30%" alt="Checkout" />
+</p>
+```
 This ensures the **booking intent is never lost** even when the user is not logged in.
 
 ---
