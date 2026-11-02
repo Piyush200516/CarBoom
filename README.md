@@ -4,13 +4,13 @@
 
 **CarBoom** is a modern **peer-to-peer vehicle rental marketplace** that enables users to rent and list Cars, Bikes, Scooters, Bicycles & EVs — for durations ranging from **1 hour to 1 week**. Built for **Tier-2 and Tier-3 cities in India**.
 
-[![GitHub Repo](https://img.shields.io/badge/GitHub-CarBoom-181717?logo=github)](https://github.com/Piyush200516/CarBoom)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/Node.js-Express%205-339933?logo=node.js)](https://nodejs.org)
-[![React](https://img.shields.io/badge/Frontend-React%2019-61DAFB?logo=react)](https://react.dev)
-[![PostgreSQL](https://img.shields.io/badge/DB-Neon%20PostgreSQL-336791?logo=postgresql)](https://neon.tech)
-[![Socket.IO](https://img.shields.io/badge/Realtime-Socket.IO-010101?logo=socket.io)](https://socket.io)
-[![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?logo=typescript)](https://www.typescriptlang.org)
+<a href="https://github.com/Piyush200516/CarBoom"><img src="https://img.shields.io/badge/GitHub-CarBoom-181717?logo=github" alt="GitHub Repo" /></a>
+<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
+<a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-Express%205-339933?logo=node.js" alt="Node.js" /></a>
+<a href="https://react.dev"><img src="https://img.shields.io/badge/Frontend-React%2019-61DAFB?logo=react" alt="React" /></a>
+<a href="https://neon.tech"><img src="https://img.shields.io/badge/DB-Neon%20PostgreSQL-336791?logo=postgresql" alt="PostgreSQL" /></a>
+<a href="https://socket.io"><img src="https://img.shields.io/badge/Realtime-Socket.IO-010101?logo=socket.io" alt="Socket.IO" /></a>
+<a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/Language-TypeScript-3178C6?logo=typescript" alt="TypeScript" /></a>
 
 </div>
 
@@ -97,39 +97,34 @@ CarBoom is a next-generation **peer-to-peer vehicle rental platform** where:
 
 ```mermaid
 graph TD
-    %% Actors
-    User((Renter / Owner))
-    Admin((Admin))
+    User(("Renter / Owner"))
+    Admin(("Admin"))
 
-    %% Frontend
-    subgraph Frontend [React 19 + Vite — Vercel]
-        UI[UI Components\nShadcn / Tailwind]
-        SocketC[Socket.IO Client\nSocketContext]
-        AuthCtx[AuthContext\nJWT Session]
-        Routes[ProtectedRoute\nGuestRoute Guards]
+    subgraph Frontend["React 19 + Vite - Vercel"]
+        UI["UI Components<br/>Shadcn / Tailwind"]
+        SocketC["Socket.IO Client<br/>SocketContext"]
+        AuthCtx["AuthContext<br/>JWT Session"]
+        Routes["ProtectedRoute<br/>GuestRoute Guards"]
     end
 
-    %% Backend
-    subgraph Backend [Node.js + Express 5 — Render]
-        API[REST API /api/v1]
-        Auth[JWT + Passport OAuth]
-        SocketS[Socket.IO Server\nUser Rooms]
-        SocketMgr[socketManager.ts\nEmit Helpers]
-        Prisma[Prisma ORM]
+    subgraph Backend["Node.js + Express 5 - Render"]
+        API["REST API /api/v1"]
+        Auth["JWT + Passport OAuth"]
+        SocketS["Socket.IO Server<br/>User Rooms"]
+        SocketMgr["socketManager.ts<br/>Emit Helpers"]
+        Prisma["Prisma ORM"]
     end
 
-    %% Data & External Services
-    DB[(Neon PostgreSQL)]
-    Cache[(Redis Cache)]
-    Cloudinary[Cloudinary\nImage Storage]
-    Razorpay[Razorpay\nPayments]
-    Email[Nodemailer\nEmail Service]
+    DB[("Neon PostgreSQL")]
+    Cache[("Redis Cache")]
+    Cloudinary["Cloudinary<br/>Image Storage"]
+    Razorpay["Razorpay<br/>Payments"]
+    Email["Nodemailer<br/>Email Service"]
 
-    %% Connections
     User <-->|HTTPS| Frontend
     Admin <-->|HTTPS| Frontend
-    Frontend <-->|REST /api/v1| API
-    Frontend <-->|WebSocket ws://| SocketS
+    Frontend <-->|"REST /api/v1"| API
+    Frontend <-->|WebSocket| SocketS
     API <--> Auth
     API <--> Prisma
     API <--> Cache
@@ -156,49 +151,49 @@ sequenceDiagram
     Client->>SocketCtx: Connect socket
     SocketCtx->>SocketIO: connect()
     SocketIO-->>SocketCtx: connected
-    SocketCtx->>SocketIO: emit("join", userId)
+    SocketCtx->>SocketIO: emit join(userId)
     SocketIO-->>SocketCtx: joined user room
 
-    Note over User,DB: --- Booking Created ---
+    Note over User,DB: Booking Created
     User->>Client: Book vehicle
     Client->>Service: POST /api/v1/bookings
     Service->>DB: Create booking (PENDING)
     Service->>DB: Create notification
-    Service->>SocketIO: emitNotification(ownerId, ...)
+    Service->>SocketIO: emitNotification(ownerId)
     SocketIO-->>Client: notification:new event
-    Client-->>User: 🔔 Toast + badge update
+    Client-->>User: Toast + badge update
 
-    Note over User,DB: --- Payment Verified ---
+    Note over User,DB: Payment Verified
     Client->>Service: POST /api/v1/payments/verify
-    Service->>DB: Update booking → CONFIRMED
+    Service->>DB: Update booking to CONFIRMED
     Service->>SocketIO: emitPaymentConfirmed(userId)
     SocketIO-->>Client: payment:confirmed event
-    Client-->>User: 💳 "Payment Confirmed!" toast → redirect
+    Client-->>User: Payment Confirmed toast and redirect
 ```
 
 ### 3. Protected Booking Flow
 
 ```mermaid
 flowchart TD
-    A([User visits Vehicle Details]) --> B{Logged in?}
-    B -- No --> C[Show 'Login to Book' button]
-    C --> D[Store bookingIntent in localStorage]
-    D --> E[Redirect to /login\nwith returnTo state]
-    E --> F[User logs in]
-    F --> G{bookingIntent exists?}
-    G -- Yes --> H[Redirect to /checkout]
-    G -- No --> I[Redirect to /dashboard]
-    B -- Yes --> J[Show 'Book Now' button]
-    J --> K[Store bookingIntent + pricing\nin localStorage]
-    K --> H[/checkout — ProtectedRoute]
-    H --> L{Authenticated?}
+    A(["User visits Vehicle Details"]) --> B{"Logged in?"}
+    B -- No --> C["Show Login to Book button"]
+    C --> D["Store bookingIntent in localStorage"]
+    D --> E["Redirect to /login<br/>with returnTo state"]
+    E --> F["User logs in"]
+    F --> G{"bookingIntent exists?"}
+    G -- Yes --> H["/checkout - ProtectedRoute"]
+    G -- No --> I["Redirect to /dashboard"]
+    B -- Yes --> J["Show Book Now button"]
+    J --> K["Store bookingIntent + pricing<br/>in localStorage"]
+    K --> H
+    H --> L{"Authenticated?"}
     L -- No --> E
-    L -- Yes --> M[Show real pricing breakdown]
-    M --> N[Proceed to /payment — ProtectedRoute]
-    N --> O{Card / COD / Netbanking}
-    O --> P[POST /payments/verify]
-    P --> Q[🔌 Socket: payment:confirmed]
-    Q --> R[/booking-confirmation]
+    L -- Yes --> M["Show real pricing breakdown"]
+    M --> N["Proceed to /payment - ProtectedRoute"]
+    N --> O{"Card / COD / Netbanking"}
+    O --> P["POST /payments/verify"]
+    P --> Q["Socket: payment:confirmed"]
+    Q --> R["/booking-confirmation"]
 ```
 
 ### 4. Database Entity Relationship (ER) Diagram
@@ -223,7 +218,7 @@ erDiagram
 
     BOOKING ||--|| PAYMENT : generates
     BOOKING ||--|| TRANSACTION : records
-    BOOKING }o--|| COUPON : "uses"
+    BOOKING }o--|| COUPON : uses
 
     USER {
         uuid id PK
@@ -279,19 +274,19 @@ erDiagram
 
 ```mermaid
 flowchart LR
-    Dev([Developer]) -->|Push to main| GitHub[GitHub Repository]
-    GitHub -->|Webhook| Jenkins[Jenkins CI]
+    Dev(["Developer"]) -->|Push to main| GitHub["GitHub Repository"]
+    GitHub -->|Webhook| Jenkins["Jenkins CI"]
 
-    subgraph Jenkins Pipeline
-        Checkout[Clone Repo] --> Install[npm ci\nFrontend + Backend]
-        Install --> PrismaGen[Prisma Generate]
-        PrismaGen --> Lint[ESLint\nFrontend + Backend]
-        Lint --> Test[Run Tests]
-        Test --> BuildF[Build Vite\nFrontend]
-        Test --> BuildB[Build TypeScript\nBackend]
-        BuildF --> Verify[Verify dist/]
+    subgraph Pipeline["Jenkins Pipeline"]
+        Checkout["Clone Repo"] --> Install["npm ci<br/>Frontend + Backend"]
+        Install --> PrismaGen["Prisma Generate"]
+        PrismaGen --> Lint["ESLint<br/>Frontend + Backend"]
+        Lint --> Test["Run Tests"]
+        Test --> BuildF["Build Vite<br/>Frontend"]
+        Test --> BuildB["Build TypeScript<br/>Backend"]
+        BuildF --> Verify["Verify dist/"]
         BuildB --> Verify
-        Verify --> Archive[Archive Artifacts]
+        Verify --> Archive["Archive Artifacts"]
     end
 
     Jenkins -->|Status| GitHub
@@ -307,7 +302,7 @@ CarBoom/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── ui/
-│   │   │   │   ├── NotificationBell.tsx   # 🔌 Real-time notification bell
+│   │   │   │   ├── NotificationBell.tsx   # Real-time notification bell
 │   │   │   │   ├── NotificationBell.css
 │   │   │   │   ├── Toast.tsx
 │   │   │   │   ├── Button.tsx
@@ -353,7 +348,7 @@ CarBoom/
 │   │   │   └── profileService.ts
 │   │   ├── store/
 │   │   │   ├── AuthContext.tsx            # JWT session + forced logout
-│   │   │   └── SocketContext.tsx          # 🔌 Socket.IO client context
+│   │   │   └── SocketContext.tsx          # Socket.IO client context
 │   │   ├── router/
 │   │   │   └── AppRoutes.tsx              # GuestRoute + ProtectedRoute guards
 │   │   ├── layouts/
@@ -382,9 +377,9 @@ CarBoom/
 │   │   │   ├── user.routes.ts
 │   │   │   ├── vehicle.routes.ts
 │   │   │   ├── booking.routes.ts
-│   │   │   ├── payment.routes.ts          # NEW
-│   │   │   ├── review.routes.ts           # NEW
-│   │   │   ├── notification.routes.ts     # NEW
+│   │   │   ├── payment.routes.ts
+│   │   │   ├── review.routes.ts
+│   │   │   ├── notification.routes.ts
 │   │   │   └── index.ts                   # All routes registered
 │   │   ├── repositories/
 │   │   │   ├── booking.repository.ts
@@ -396,13 +391,13 @@ CarBoom/
 │   │   │   └── user.repository.ts
 │   │   ├── services/
 │   │   │   ├── auth.service.ts
-│   │   │   ├── booking.service.ts         # 🔌 Real-time events on status change
-│   │   │   ├── payment.service.ts         # 🔌 Real-time payment confirmation
+│   │   │   ├── booking.service.ts         # Real-time events on status change
+│   │   │   ├── payment.service.ts         # Real-time payment confirmation
 │   │   │   ├── review.service.ts
 │   │   │   ├── vehicle.service.ts
 │   │   │   └── storage.service.ts
 │   │   ├── lib/
-│   │   │   └── socketManager.ts           # 🔌 Socket.IO singleton + emit helpers
+│   │   │   └── socketManager.ts           # Socket.IO singleton + emit helpers
 │   │   ├── middleware/
 │   │   │   ├── auth.middleware.ts
 │   │   │   ├── error.middleware.ts
@@ -477,12 +472,12 @@ CarBoom uses Socket.IO to push live events directly to users without page refres
 
 When a **guest** tries to book:
 
-```
+```text
 Vehicle Details → handleBooking()
   ↓ Not authenticated
   ↓ Save bookingIntent to localStorage
   ↓ navigate("/login", { state: { returnTo: vehicleUrl } })
-  
+
 Login page → onSubmit()
   ↓ Login success
   ↓ bookingIntent exists? → navigate("/checkout")
@@ -691,7 +686,7 @@ Backend runs at: **`http://localhost:5000`**
 Socket.IO: **`ws://localhost:5000`**  
 Swagger Docs: **`http://localhost:5000/api-docs`**
 
-> **Note:** The server now creates an `http.createServer(app)` so that Express and Socket.IO share the same port — no separate WebSocket port needed.
+> **Note:** The server creates an `http.createServer(app)` so that Express and Socket.IO share the same port — no separate WebSocket port needed.
 
 ---
 
