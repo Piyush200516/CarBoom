@@ -830,7 +830,7 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 **Piyush Mishra**
 
 - GitHub: [github.com/Piyush200516](https://github.com/Piyush200516)
-- LinkedIn: [linkedin.com/in/piyush-mishra](https://linkedin.com/in/piyush-mishra)
+- LinkedIn: [linkedin.com/in/piyush-mishra](https://www.linkedin.com/in/mishra162005/)
 
 ---
 
