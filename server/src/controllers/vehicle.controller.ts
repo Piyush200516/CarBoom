@@ -66,7 +66,8 @@ export class VehicleController {
    * GET /api/v1/vehicles/:id — Get vehicle detail
    */
   getVehicleById = asyncHandler(async (req: Request, res: Response) => {
-    const vehicle = await vehicleService.getVehicleById(req.params.id);
+    const vehicleId = req.params.id as string;
+    const vehicle = await vehicleService.getVehicleById(vehicleId);
     res.status(200).json(new ApiResponse(200, { vehicle }, "Vehicle fetched successfully."));
   });
 
@@ -75,7 +76,8 @@ export class VehicleController {
    */
   updateVehicle = asyncHandler(async (req: Request, res: Response) => {
     if (!req.user) throw new ApiError(401, "Unauthorized");
-    const vehicle = await vehicleService.updateVehicle(req.params.id, req.user.userId, req.body);
+    const vehicleId = req.params.id as string;
+    const vehicle = await vehicleService.updateVehicle(vehicleId, req.user.userId, req.body);
     res.status(200).json(new ApiResponse(200, { vehicle }, "Vehicle updated successfully."));
   });
 
@@ -84,7 +86,8 @@ export class VehicleController {
    */
   deleteVehicle = asyncHandler(async (req: Request, res: Response) => {
     if (!req.user) throw new ApiError(401, "Unauthorized");
-    await vehicleService.deleteVehicle(req.params.id, req.user.userId);
+    const vehicleId = req.params.id as string;
+    await vehicleService.deleteVehicle(vehicleId, req.user.userId);
     res.status(200).json(new ApiResponse(200, null, "Vehicle deleted successfully."));
   });
 
@@ -93,7 +96,8 @@ export class VehicleController {
    */
   addImages = asyncHandler(async (req: Request, res: Response) => {
     if (!req.user) throw new ApiError(401, "Unauthorized");
-    const images = await vehicleService.addImages(req.params.id, req.user.userId, req.body.images);
+    const vehicleId = req.params.id as string;
+    const images = await vehicleService.addImages(vehicleId, req.user.userId, req.body.images);
     res.status(201).json(new ApiResponse(201, { images }, "Images added successfully."));
   });
 
@@ -102,7 +106,8 @@ export class VehicleController {
    */
   deleteImage = asyncHandler(async (req: Request, res: Response) => {
     if (!req.user) throw new ApiError(401, "Unauthorized");
-    await vehicleService.deleteImage(req.params.imageId, req.user.userId);
+    const imageId = req.params.imageId as string;
+    await vehicleService.deleteImage(imageId, req.user.userId);
     res.status(200).json(new ApiResponse(200, null, "Image deleted."));
   });
 
@@ -111,7 +116,8 @@ export class VehicleController {
    */
   addDocument = asyncHandler(async (req: Request, res: Response) => {
     if (!req.user) throw new ApiError(401, "Unauthorized");
-    const doc = await vehicleService.addDocument(req.params.id, req.user.userId, {
+    const vehicleId = req.params.id as string;
+    const doc = await vehicleService.addDocument(vehicleId, req.user.userId, {
       type: req.body.type as DocumentType,
       url: req.body.url,
       publicId: req.body.publicId,
@@ -124,7 +130,8 @@ export class VehicleController {
    */
   deleteDocument = asyncHandler(async (req: Request, res: Response) => {
     if (!req.user) throw new ApiError(401, "Unauthorized");
-    await vehicleService.deleteDocument(req.params.docId, req.user.userId);
+    const docId = req.params.docId as string;
+    await vehicleService.deleteDocument(docId, req.user.userId);
     res.status(200).json(new ApiResponse(200, null, "Document deleted."));
   });
 }

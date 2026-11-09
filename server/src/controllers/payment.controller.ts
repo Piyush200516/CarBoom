@@ -49,7 +49,8 @@ export class PaymentController {
    */
   getPaymentByBooking = asyncHandler(async (req: Request, res: Response) => {
     if (!req.user) throw new ApiError(401, "Unauthorized");
-    const payment = await paymentService.getPaymentByBooking(req.params.bookingId);
+    const bookingId = req.params.bookingId as string;
+    const payment = await paymentService.getPaymentByBooking(bookingId);
     res.status(200).json(new ApiResponse(200, { payment }, "Payment fetched."));
   });
 }

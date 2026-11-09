@@ -12,7 +12,7 @@ import { HeaderSection } from "../../components/profile/HeaderSection";
 import { StatsCard } from "../../components/profile/StatsCard";
 import { SectionCard } from "../../components/profile/SectionCard";
 import { GlassInput } from "../../components/ui/GlassInput";
-import { User, Mail, Phone, Calendar, MapPin, Key } from "lucide-react";
+import { User, Mail, Phone, Calendar, MapPin, Key, ShieldCheck, Upload, FileText } from "lucide-react";
 
 // Validation schema
 const profileSchema = z.object({
@@ -39,6 +39,9 @@ export const ProfilePage: React.FC = () => {
   );
   const [accountStatus, setAccountStatus] = useState<string>("Verified");
   const [completion, setCompletion] = useState<number>(0);
+  const [kycVerified, setKycVerified] = useState<boolean>(false);
+  const [kycDocUrl, setKycDocUrl] = useState<string>("");
+  const [isUploadingKyc, setIsUploadingKyc] = useState<boolean>(false);
 
   const {
     register,
@@ -103,6 +106,17 @@ export const ProfilePage: React.FC = () => {
         setProfilePic(data.avatar || "");
         setMemberSince(new Date(data.createdAt).toLocaleDateString());
         setAccountStatus(data.isVerified ? "Verified" : "Unverified");
+        setKycVerified(!!data.isVerified);
+
+        // Fetch KYC Document Details
+        try {
+          const kycRes = await profileService.getKycStatus();
+          if (kycRes?.kyc?.documentUrl) {
+            setKycDocUrl(kycRes.kyc.documentUrl);
+          }
+        } catch {
+          // ignore if not submitted yet
+        }
         setCompletion(computeCompletion({
           fullName: data.name || "",
           email: data.email || "",
@@ -172,6 +186,35 @@ export const ProfilePage: React.FC = () => {
       toast("Profile picture updated", { type: "success" });
     } catch (_err) {
       toast("Failed to upload picture", { type: "error" });
+    }
+  };
+
+  const handleKycUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingKyc(true);
+    const formData = new FormData();
+    formData.append("document", file);
+
+    try {
+      const resp = await profileService.uploadKyc(formData);
+      setKycVerified(true);
+      setAccountStatus("Verified");
+      if (resp.verification?.documentUrl) {
+        setKycDocUrl(resp.verification.documentUrl);
+      }
+      toast("Driving License Uploaded", {
+        description: "Your Driving License / KYC document has been verified successfully.",
+        type: "success",
+      });
+    } catch (err: any) {
+      toast("KYC Upload Failed", {
+        description: err.response?.data?.message || "Failed to upload KYC document.",
+        type: "error",
+      });
+    } finally {
+      setIsUploadingKyc(false);
     }
   };
 
@@ -251,6 +294,46 @@ export const ProfilePage: React.FC = () => {
         <SectionCard title="Account Information">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <GlassInput label="Account Type" type="text" icon={Key} disabled={true} register={register("accountType")} name="accountType" />
+          </div>
+        </SectionCard>
+
+        {/* Driving License & KYC Verification */}
+        <SectionCard title="Driving License & KYC Verification">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={20} className={kycVerified ? "text-green-400" : "text-yellow-400"} />
+                <span className="font-semibold text-white">
+                  {kycVerified ? "Government Verified Driver" : "Driving License Verification Required"}
+                </span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  kycVerified ? "bg-green-500/20 text-green-400 border border-green-500/30" : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                }`}>
+                  {kycVerified ? "Verified (KYC Done)" : "Verification Pending"}
+                </span>
+              </div>
+              <p className="text-xs text-gray-400">
+                Upload your Indian Driving License or Aadhaar card to unlock seamless instant vehicle booking and self-drive access.
+              </p>
+              {kycDocUrl && (
+                <div className="pt-1 flex items-center gap-2 text-xs text-blue-400">
+                  <FileText size={14} />
+                  <span>Document on file: <a href={kycDocUrl} target="_blank" rel="noreferrer" className="underline hover:text-blue-300">View Uploaded License</a></span>
+                </div>
+              )}
+            </div>
+
+            <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black font-semibold text-sm rounded-xl hover:bg-yellow-300 transition shadow-yellow-glow-hover disabled:opacity-50">
+              <Upload size={16} />
+              <span>{isUploadingKyc ? "Uploading..." : kycVerified ? "Re-upload License" : "Upload DL / Aadhaar"}</span>
+              <input
+                type="file"
+                accept="image/*,application/pdf"
+                className="hidden"
+                disabled={isUploadingKyc}
+                onChange={handleKycUpload}
+              />
+            </label>
           </div>
         </SectionCard>
 

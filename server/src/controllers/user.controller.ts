@@ -7,6 +7,7 @@ import { userRepository } from "../repositories/user.repository.js";
 
 import fs from "fs";
 import path from "path";
+import { prisma } from "../config/db.js";
 
 export class UserController {
   // GET /users/profile
@@ -71,6 +72,78 @@ export class UserController {
     return res
       .status(200)
       .json(new ApiResponse(200, { avatar: avatarUrl }, "Profile photo uploaded"));
+  });
+
+  // POST /users/kyc
+  uploadKyc = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new ApiError(401, "Unauthorized");
+    }
+
+    let documentUrl = req.body.documentUrl;
+    const file = (req as any).file;
+
+    if (file) {
+      const uploadDir = path.join(process.cwd(), "uploads", "kyc");
+      await fs.promises.mkdir(uploadDir, { recursive: true });
+      const filename = `${Date.now()}_${file.originalname}`;
+      const filePath = path.join(uploadDir, filename);
+      await fs.promises.writeFile(filePath, file.buffer);
+      documentUrl = `/uploads/kyc/${filename}`;
+    }
+
+    if (!documentUrl) {
+      throw new ApiError(400, "Please upload a Driving License or Aadhaar document, or provide documentUrl.");
+    }
+
+    const verification = await prisma.ownerVerification.upsert({
+      where: { userId: req.user.userId },
+      update: {
+        documentUrl,
+        status: "APPROVED", // Auto-approved for verified mock or pending
+      },
+      create: {
+        userId: req.user.userId,
+        documentUrl,
+        status: "APPROVED",
+      },
+    });
+
+    await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { isVerified: true },
+    });
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        { verification, isVerified: true },
+        "Driving License / KYC document uploaded and verified successfully."
+      )
+    );
+  });
+
+  // GET /users/kyc
+  getKycStatus = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new ApiError(401, "Unauthorized");
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: { isVerified: true, ownerVerification: true },
+    });
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          isVerified: !!user?.isVerified,
+          kyc: user?.ownerVerification || null,
+        },
+        "KYC status retrieved."
+      )
+    );
   });
 }
 

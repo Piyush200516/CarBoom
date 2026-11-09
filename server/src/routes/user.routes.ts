@@ -15,4 +15,8 @@ router.put("/profile", authenticate, userController.updateProfile);
 // Upload profile photo
 router.post("/profile/photo", authenticate, uploadImage.single("photo"), userController.uploadPhoto);
 
+// Driving License / KYC Verification
+router.get("/kyc", authenticate, userController.getKycStatus);
+router.post("/kyc", authenticate, uploadImage.single("document"), userController.uploadKyc);
+
 export default router;

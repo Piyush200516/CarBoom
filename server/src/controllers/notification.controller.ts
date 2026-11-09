@@ -21,7 +21,8 @@ export class NotificationController {
    */
   markAsRead = asyncHandler(async (req: Request, res: Response) => {
     if (!req.user) throw new ApiError(401, "Unauthorized");
-    await notificationRepository.markAsRead(req.params.id, req.user.userId);
+    const id = req.params.id as string;
+    await notificationRepository.markAsRead(id, req.user.userId);
     res.status(200).json(new ApiResponse(200, null, "Notification marked as read."));
   });
 

@@ -43,4 +43,19 @@ export const authService = {
     const response = await api.get("/auth/me");
     return response.data;
   },
+
+  async sendPhoneOtp(phone: string) {
+    const response = await api.post("/auth/phone-otp/send", { phone });
+    return response.data;
+  },
+
+  async verifyPhoneOtp(phone: string, otp: string, name?: string) {
+    const response = await api.post("/auth/phone-otp/verify", { phone, otp, name });
+    return response.data;
+  },
+
+  async loginWithOAuth(provider: "google" | "github", email: string, name: string, avatar?: string) {
+    const response = await api.post("/auth/oauth", { provider, email, name, avatar });
+    return response.data;
+  },
 };

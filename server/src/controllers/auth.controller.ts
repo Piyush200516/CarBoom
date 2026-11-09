@@ -153,6 +153,68 @@ export class AuthController {
         )
       );
   });
+
+  /**
+   * POST /api/v1/auth/phone-otp/send — Send verification OTP to phone
+   */
+  sendPhoneOtp = asyncHandler(async (req: Request, res: Response) => {
+    const { phone } = req.body;
+    const result = await authService.sendPhoneOtp(phone);
+    res.status(200).json(new ApiResponse(200, result, "OTP sent successfully."));
+  });
+
+  /**
+   * POST /api/v1/auth/phone-otp/verify — Verify OTP & Login
+   */
+  verifyPhoneOtp = asyncHandler(async (req: Request, res: Response) => {
+    const { phone, otp, name } = req.body;
+    if (!phone || !otp) {
+      throw new ApiError(400, "Phone number and OTP are required.");
+    }
+
+    const { user, accessToken, refreshToken } = await authService.loginWithPhone(
+      phone,
+      otp,
+      name
+    );
+
+    setAuthCookies(res, accessToken, refreshToken);
+
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        { user, accessToken, refreshToken },
+        "Logged in successfully via Phone OTP."
+      )
+    );
+  });
+
+  /**
+   * POST /api/v1/auth/oauth — Direct OAuth token/profile exchange
+   */
+  oauthLogin = asyncHandler(async (req: Request, res: Response) => {
+    const { provider, email, name, avatar } = req.body;
+    if (!provider || !email) {
+      throw new ApiError(400, "Provider and email are required for social login.");
+    }
+
+    const { user, accessToken, refreshToken } = await authService.loginWithOAuth(
+      provider,
+      email,
+      name || "Social User",
+      avatar
+    );
+
+    setAuthCookies(res, accessToken, refreshToken);
+
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        { user, accessToken, refreshToken },
+        `Logged in successfully via ${provider}.`
+      )
+    );
+  });
 }
 
 export const authController = new AuthController();

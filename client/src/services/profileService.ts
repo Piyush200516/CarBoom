@@ -36,6 +36,18 @@ const profileService = {
     // Return the avatar URL object
     return response.data.data;
   },
+
+  async uploadKyc(formData: FormData): Promise<{ isVerified: boolean; verification: any }> {
+    const response = await api.post("/users/kyc", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data.data;
+  },
+
+  async getKycStatus(): Promise<{ isVerified: boolean; kyc: any }> {
+    const response = await api.get("/users/kyc");
+    return response.data.data;
+  },
 };
 
 export default profileService;

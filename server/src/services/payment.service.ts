@@ -61,7 +61,7 @@ export class PaymentService {
     const { bookingId, razorpayOrderId, razorpayPaymentId, razorpaySignature } = input;
 
     // HMAC verification — use Razorpay secret from env
-    const razorpaySecret = (config as Record<string, string>)["RAZORPAY_KEY_SECRET"] || "mock_razorpay_secret";
+    const razorpaySecret = (config as unknown as Record<string, string>)["RAZORPAY_KEY_SECRET"] || "mock_razorpay_secret";
     const expectedSignature = crypto
       .createHmac("sha256", razorpaySecret)
       .update(`${razorpayOrderId}|${razorpayPaymentId}`)

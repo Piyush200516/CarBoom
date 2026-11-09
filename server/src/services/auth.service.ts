@@ -10,6 +10,9 @@ import {
 import { config } from "../config/config.js";
 import { Role } from "@prisma/client";
 import { logger } from "../config/logger.js";
+import { smsService } from "./sms.service.js";
+import { prisma } from "../config/db.js";
+import crypto from "crypto";
 
 // Helper to parse simple duration strings (e.g. "7d", "15m", "24h") to milliseconds
 export const parseDuration = (duration: string): number => {
@@ -208,6 +211,119 @@ export class AuthService {
     );
 
     return { deletedCount: result.count };
+  }
+
+  /**
+   * Request phone verification OTP
+   */
+  async sendPhoneOtp(phone: string) {
+    if (!phone || phone.trim().length < 10) {
+      throw new ApiError(400, "Please provide a valid 10-digit phone number.");
+    }
+    return smsService.sendOtp(phone);
+  }
+
+  /**
+   * Verify phone OTP and authenticate (login or auto-register)
+   */
+  async loginWithPhone(phone: string, otp: string, name?: string) {
+    const cleanPhone = phone.trim().replace(/\D/g, "");
+    if (!cleanPhone || cleanPhone.length < 10) {
+      throw new ApiError(400, "Invalid phone number format.");
+    }
+
+    const isValid = smsService.verifyOtp(cleanPhone, otp);
+    if (!isValid) {
+      throw new ApiError(400, "Invalid or expired OTP. Please try again.");
+    }
+
+    // Find existing user by phone
+    let user = await prisma.user.findFirst({
+      where: { phone: cleanPhone },
+    });
+
+    if (!user) {
+      // Find by fallback email or create a new user
+      const fallbackEmail = `${cleanPhone}@carboom.user`;
+      user = await prisma.user.findUnique({ where: { email: fallbackEmail } });
+
+      if (!user) {
+        const dummyPassword = crypto.randomBytes(16).toString("hex");
+        const passwordHash = await hashPassword(dummyPassword);
+        const displayName = name?.trim() || `User ${cleanPhone.slice(-4)}`;
+
+        user = await userRepository.createUser({
+          email: fallbackEmail,
+          passwordHash,
+          name: displayName,
+          phone: cleanPhone,
+          role: Role.RENTER,
+        });
+      }
+    }
+
+    const accessToken = generateAccessToken({
+      userId: user.id,
+      role: user.role,
+      email: user.email,
+    });
+    const refreshToken = generateRefreshToken({ userId: user.id });
+
+    const refreshExpiryMs = parseDuration(config.JWT_REFRESH_EXPIRY);
+    const expiresAt = new Date(Date.now() + refreshExpiryMs);
+    await tokenRepository.createToken(user.id, refreshToken, expiresAt);
+
+    const { password, ...userWithoutPassword } = user;
+    return {
+      user: userWithoutPassword,
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  /**
+   * OAuth Social Login (Google / GitHub)
+   */
+  async loginWithOAuth(provider: "google" | "github", email: string, name: string, avatar?: string) {
+    if (!email) {
+      throw new ApiError(400, "Email is required for social login.");
+    }
+
+    let user = await userRepository.findByEmail(email);
+
+    if (!user) {
+      const dummyPassword = crypto.randomBytes(16).toString("hex");
+      const passwordHash = await hashPassword(dummyPassword);
+
+      user = await userRepository.createUser({
+        email,
+        passwordHash,
+        name: name || "Social User",
+        role: Role.RENTER,
+      });
+
+      if (avatar) {
+        user = await userRepository.updateProfile(user.id, { avatar });
+      }
+    }
+
+    const accessToken = generateAccessToken({
+      userId: user.id,
+      role: user.role,
+      email: user.email,
+    });
+    const refreshToken = generateRefreshToken({ userId: user.id });
+
+    const refreshExpiryMs = parseDuration(config.JWT_REFRESH_EXPIRY);
+    const expiresAt = new Date(Date.now() + refreshExpiryMs);
+    await tokenRepository.createToken(user.id, refreshToken, expiresAt);
+
+    const { password, ...userWithoutPassword } = user;
+    return {
+      user: userWithoutPassword,
+      accessToken,
+      refreshToken,
+    };
   }
 }
 

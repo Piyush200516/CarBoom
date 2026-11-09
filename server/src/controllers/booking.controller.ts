@@ -63,7 +63,8 @@ export class BookingController {
    */
   getBookingById = asyncHandler(async (req: Request, res: Response) => {
     if (!req.user) throw new ApiError(401, "Unauthorized");
-    const booking = await bookingService.getBookingById(req.params.id, req.user.userId);
+    const bookingId = req.params.id as string;
+    const booking = await bookingService.getBookingById(bookingId, req.user.userId);
     res.status(200).json(new ApiResponse(200, { booking }, "Booking fetched."));
   });
 
@@ -74,9 +75,10 @@ export class BookingController {
     if (!req.user) throw new ApiError(401, "Unauthorized");
     const { status } = req.body;
     if (!status) throw new ApiError(400, "Status is required.");
+    const bookingId = req.params.id as string;
 
     const booking = await bookingService.updateBookingStatus(
-      req.params.id,
+      bookingId,
       req.user.userId,
       status as BookingStatus
     );
@@ -88,7 +90,8 @@ export class BookingController {
    */
   cancelBooking = asyncHandler(async (req: Request, res: Response) => {
     if (!req.user) throw new ApiError(401, "Unauthorized");
-    const result = await bookingService.cancelBooking(req.params.id, req.user.userId);
+    const bookingId = req.params.id as string;
+    const result = await bookingService.cancelBooking(bookingId, req.user.userId);
     res
       .status(200)
       .json(new ApiResponse(200, result, `Booking cancelled. Refund: ${result.refundPercent}%`));

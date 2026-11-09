@@ -26,7 +26,8 @@ export class ReviewController {
   getVehicleReviews = asyncHandler(async (req: Request, res: Response) => {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
-    const result = await reviewService.getVehicleReviews(req.params.vehicleId, page, limit);
+    const vehicleId = req.params.vehicleId as string;
+    const result = await reviewService.getVehicleReviews(vehicleId, page, limit);
     res.status(200).json(new ApiResponse(200, result, "Reviews fetched."));
   });
 
@@ -44,7 +45,8 @@ export class ReviewController {
    */
   deleteReview = asyncHandler(async (req: Request, res: Response) => {
     if (!req.user) throw new ApiError(401, "Unauthorized");
-    await reviewService.deleteReview(req.params.id, req.user.userId);
+    const reviewId = req.params.id as string;
+    await reviewService.deleteReview(reviewId, req.user.userId);
     res.status(200).json(new ApiResponse(200, null, "Review deleted."));
   });
 }
