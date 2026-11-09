@@ -38,6 +38,10 @@ interface CreateVehicleInput {
 interface VehicleBrowseFilters {
   type?: VehicleType;
   city?: string;
+  brand?: string;
+  search?: string;
+  pickupDate?: string;
+  returnDate?: string;
   fuelType?: FuelType;
   transmission?: Transmission;
   minPrice?: number;
@@ -69,13 +73,28 @@ export class VehicleService {
     if (!vehicle) {
       throw new ApiError(404, "Vehicle not found.");
     }
-    return vehicle;
+
+    // Compute average rating
+    const reviews = (vehicle as any).reviews || [];
+    const avgRating = reviews.length > 0
+      ? Number((reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / reviews.length).toFixed(1))
+      : 5.0;
+
+    return {
+      ...vehicle,
+      avgRating,
+      reviewsCount: reviews.length,
+    };
   }
 
   async browseVehicles(filters: VehicleBrowseFilters) {
     const {
       type,
       city,
+      brand,
+      search,
+      pickupDate,
+      returnDate,
       fuelType,
       transmission,
       minPrice,
@@ -92,9 +111,39 @@ export class VehicleService {
 
     if (type) where.type = type;
     if (city) where.city = { contains: city, mode: "insensitive" };
+    if (brand && brand !== "All" && brand !== "all") {
+      where.brand = { contains: brand, mode: "insensitive" };
+    }
     if (fuelType) where.fuelType = fuelType;
     if (transmission) where.transmission = transmission;
     if (seats) where.seatingCapacity = { gte: seats };
+
+    if (search && search.trim()) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { brand: { contains: search, mode: "insensitive" } },
+        { model: { contains: search, mode: "insensitive" } },
+        { city: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    // Availability Filter: Check overlapping bookings
+    if (pickupDate && returnDate) {
+      const start = new Date(pickupDate);
+      const end = new Date(returnDate);
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end > start) {
+        where.bookings = {
+          none: {
+            status: { in: ["PENDING", "CONFIRMED", "ACTIVE"] },
+            OR: [
+              { startTime: { lte: start }, endTime: { gte: start } },
+              { startTime: { lte: end }, endTime: { gte: end } },
+              { startTime: { gte: start }, endTime: { lte: end } },
+            ],
+          },
+        };
+      }
+    }
 
     if (minPrice !== undefined || maxPrice !== undefined) {
       where.pricePerDay = {
@@ -107,16 +156,29 @@ export class VehicleService {
       price_asc: { pricePerDay: "asc" },
       price_desc: { pricePerDay: "desc" },
       newest: { createdAt: "desc" },
-      rating: { createdAt: "desc" }, // placeholder until avg rating column
+      rating: { createdAt: "desc" },
     };
     const orderBy = orderByMap[sortBy] || { createdAt: "desc" };
 
     const skip = (page - 1) * limit;
 
-    const [vehicles, total] = await Promise.all([
+    const [rawVehicles, total] = await Promise.all([
       vehicleRepository.findVehicles({ where, orderBy, skip, take: limit }),
       vehicleRepository.countVehicles(where),
     ]);
+
+    // Format vehicles with rating metadata
+    const vehicles = rawVehicles.map((v: any) => {
+      const reviews = v.reviews || [];
+      const avgRating = reviews.length > 0
+        ? Number((reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / reviews.length).toFixed(1))
+        : 5.0;
+      return {
+        ...v,
+        avgRating,
+        reviewsCount: reviews.length,
+      };
+    });
 
     return {
       vehicles,

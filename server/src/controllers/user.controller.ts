@@ -80,13 +80,31 @@ export class UserController {
       throw new ApiError(401, "Unauthorized");
     }
 
+    // Access control: User can only upload KYC for themselves unless ADMIN
+    const targetUserId = req.body.userId || req.user.userId;
+    if (targetUserId !== req.user.userId && req.user.role !== "ADMIN") {
+      throw new ApiError(403, "Access denied. You can only manage your own KYC documents.");
+    }
+
     let documentUrl = req.body.documentUrl;
     const file = (req as any).file;
 
     if (file) {
+      // Validate file size limit (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new ApiError(400, "File size exceeds the 5MB limit.");
+      }
+
+      // Validate allowed mime types (jpg, png, pdf)
+      const allowedMimes = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
+      if (!allowedMimes.includes(file.mimetype)) {
+        throw new ApiError(400, "Invalid file format. Only JPEG, PNG, and PDF files are allowed.");
+      }
+
       const uploadDir = path.join(process.cwd(), "uploads", "kyc");
       await fs.promises.mkdir(uploadDir, { recursive: true });
-      const filename = `${Date.now()}_${file.originalname}`;
+      const safeBasename = path.basename(file.originalname).replace(/[^a-zA-Z0-9.-]/g, "_");
+      const filename = `${Date.now()}_${safeBasename}`;
       const filePath = path.join(uploadDir, filename);
       await fs.promises.writeFile(filePath, file.buffer);
       documentUrl = `/uploads/kyc/${filename}`;
@@ -97,20 +115,20 @@ export class UserController {
     }
 
     const verification = await prisma.ownerVerification.upsert({
-      where: { userId: req.user.userId },
+      where: { userId: targetUserId },
       update: {
         documentUrl,
         status: "APPROVED", // Auto-approved for verified mock or pending
       },
       create: {
-        userId: req.user.userId,
+        userId: targetUserId,
         documentUrl,
         status: "APPROVED",
       },
     });
 
     await prisma.user.update({
-      where: { id: req.user.userId },
+      where: { id: targetUserId },
       data: { isVerified: true },
     });
 
@@ -129,8 +147,14 @@ export class UserController {
       throw new ApiError(401, "Unauthorized");
     }
 
+    // Access control: User can only view their own KYC status unless ADMIN
+    const targetUserId = (req.query.userId as string) || req.user.userId;
+    if (targetUserId !== req.user.userId && req.user.role !== "ADMIN") {
+      throw new ApiError(403, "Access denied. You can only view your own KYC status.");
+    }
+
     const user = await prisma.user.findUnique({
-      where: { id: req.user.userId },
+      where: { id: targetUserId },
       select: { isVerified: true, ownerVerification: true },
     });
 

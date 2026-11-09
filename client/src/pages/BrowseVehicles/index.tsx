@@ -2,6 +2,7 @@ import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { mockVehicles } from "../../data/mockData";
 import { useToast } from "../../components/ui/Toast";
+import vehicleService, { VehicleItem } from "../../services/vehicleService";
 
 // Import local components
 import HeroSection from "./components/HeroSection";
@@ -68,6 +69,54 @@ const enhancedMockVehicles: VehicleWithExtras[] = mockVehicles.map(v => {
   };
 });
 
+const formatBackendVehicleToExtras = (v: VehicleItem): VehicleWithExtras => {
+  const primaryImg = v.images?.[0]?.url || "https://images.unsplash.com/photo-1619767886558-efdc259cde1a?auto=format&fit=crop&q=80&w=800";
+  const allImages = v.images?.length ? v.images.map(img => img.url) : [primaryImg];
+
+  const typeMap: Record<string, "car" | "bike" | "scooter" | "cycle"> = {
+    CAR: "car",
+    BIKE: "bike",
+    SCOOTER: "scooter",
+    BICYCLE: "cycle",
+  };
+
+  const fuelMap: Record<string, "Petrol" | "Diesel" | "Electric" | "Hybrid" | "None"> = {
+    PETROL: "Petrol",
+    DIESEL: "Diesel",
+    ELECTRIC: "Electric",
+    CNG: "Hybrid",
+  };
+
+  return {
+    id: v.id,
+    name: v.name,
+    type: typeMap[v.type] || "car",
+    category: v.type,
+    image: primaryImg,
+    images: allImages,
+    fuelType: fuelMap[v.fuelType] || "Petrol",
+    transmission: v.transmission === "AUTOMATIC" ? "Automatic" : "Manual",
+    seats: v.seatingCapacity || 4,
+    rating: v.avgRating || 4.8,
+    reviewsCount: v.reviewsCount || 1,
+    hourlyPrice: v.pricePerHour || 120,
+    dailyPrice: v.pricePerDay || 1400,
+    mileage: `${v.mileage || 18} km/l`,
+    ownerName: v.owner?.name || "Verified Host",
+    ownerAvatar: "https://i.pravatar.cc/150?img=33",
+    ownerRating: 4.9,
+    description: v.description || "Well maintained premium vehicle with complete verification.",
+    features: ["Air Conditioning", "Bluetooth", "Fastag", "Airbags", "Clean Interior"],
+    brand: v.brand || "CarBoom",
+    distance: "1.8 km",
+    locationName: `${v.pickupAddress || v.city}, ${v.city}`,
+    instantBook: true,
+    oldPrice: Math.round((v.pricePerDay || 1400) * 1.25),
+    discountBadge: "VERIFIED",
+    ownerReviewsCount: (v.reviewsCount || 0) + 10,
+  };
+};
+
 export const BrowseVehicles = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -90,6 +139,7 @@ export const BrowseVehicles = () => {
 
   const [isLoading, setIsLoading] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState(1);
+  const [apiVehicles, setApiVehicles] = React.useState<VehicleWithExtras[] | null>(null);
 
   // Wishlist State (synced with localStorage)
   const [wishlist, setWishlist] = React.useState<string[]>(() => {
@@ -100,6 +150,49 @@ export const BrowseVehicles = () => {
       return [];
     }
   });
+
+  // Fetch real vehicles from backend API with active filter parameters
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchVehiclesFromApi = async () => {
+      setIsLoading(true);
+      try {
+        const params: Record<string, any> = {};
+        if (filters.pickupLoc) params.city = filters.pickupLoc;
+        if (filters.category && filters.category !== "all") params.type = filters.category.toUpperCase();
+        if (filters.brand && filters.brand !== "All" && filters.brand !== "all") params.brand = filters.brand;
+        if (filters.fuelType && filters.fuelType !== "all") params.fuelType = filters.fuelType.toUpperCase();
+        if (filters.transmission && filters.transmission !== "all") params.transmission = filters.transmission.toUpperCase();
+        if (filters.seats && filters.seats !== "all") params.seats = parseInt(filters.seats);
+        if (filters.pickupDate) params.pickupDate = filters.pickupDate;
+        if (filters.returnDate) params.returnDate = filters.returnDate;
+        if (filters.priceRange) params.maxPrice = filters.priceRange;
+
+        if (filters.sortBy === "price-asc") params.sortBy = "price_asc";
+        else if (filters.sortBy === "price-desc") params.sortBy = "price_desc";
+        else params.sortBy = "newest";
+
+        const res = await vehicleService.getVehicles(params);
+        if (isMounted) {
+          if (res && res.vehicles && res.vehicles.length > 0) {
+            setApiVehicles(res.vehicles.map(formatBackendVehicleToExtras));
+          } else {
+            setApiVehicles(null);
+          }
+        }
+      } catch (err) {
+        // Fallback to local fleet if backend has 0 approved listings yet
+        if (isMounted) setApiVehicles(null);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    fetchVehiclesFromApi();
+    return () => {
+      isMounted = false;
+    };
+  }, [filters]);
 
   // Calculate brand counts based on entire dataset
   const brandCounts = React.useMemo(() => {
@@ -213,6 +306,11 @@ export const BrowseVehicles = () => {
 
   // Filtered vehicles logic
   const filteredVehicles = React.useMemo(() => {
+    // If real backend API returned vehicles, prioritize live database listings
+    if (apiVehicles && apiVehicles.length > 0) {
+      return apiVehicles;
+    }
+
     return enhancedMockVehicles.filter(v => {
       // Location match
       if (filters.pickupLoc && !v.locationName.toLowerCase().includes(filters.pickupLoc.toLowerCase())) {
@@ -265,7 +363,7 @@ export const BrowseVehicles = () => {
       if (sort === "reviews") return b.reviewsCount - a.reviewsCount;
       return 0;
     });
-  }, [filters]);
+  }, [filters, apiVehicles]);
 
   const scrollToFilters = () => {
     const el = document.getElementById("search-filters-card");

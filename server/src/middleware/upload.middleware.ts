@@ -33,3 +33,9 @@ export const uploadDocument = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: documentFilter,
 });
+
+export const uploadKycDocument = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit for KYC (DL/Aadhaar)
+  fileFilter: documentFilter,
+});
