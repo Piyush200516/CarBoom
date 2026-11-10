@@ -27,10 +27,6 @@ export class VehicleController {
     const {
       type,
       city,
-      brand,
-      search,
-      pickupDate,
-      returnDate,
       fuelType,
       transmission,
       minPrice,
@@ -44,10 +40,6 @@ export class VehicleController {
     const result = await vehicleService.browseVehicles({
       type: type as VehicleType,
       city: city as string,
-      brand: brand as string,
-      search: search as string,
-      pickupDate: pickupDate as string,
-      returnDate: returnDate as string,
       fuelType: fuelType as FuelType,
       transmission: transmission as Transmission,
       minPrice: minPrice ? Number(minPrice) : undefined,

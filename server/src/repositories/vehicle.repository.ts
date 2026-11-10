@@ -65,20 +65,6 @@ export class VehicleRepository {
             startDate: "asc",
           },
         },
-        reviews: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
       },
     });
   }
@@ -98,11 +84,6 @@ export class VehicleRepository {
         images: {
           orderBy: {
             displayOrder: "asc",
-          },
-        },
-        reviews: {
-          select: {
-            rating: true,
           },
         },
         owner: {
